@@ -8,18 +8,27 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = [
+    "erpnext",
+    "hrms",
+    "crm",
+]
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "shayona",
-# 		"logo": "/assets/shayona/logo.png",
-# 		"title": "Shayona",
-# 		"route": "/shayona",
-# 		"has_permission": "shayona.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+    {
+        "name": "shayona",
+        "logo": "/assets/shayona/images/brand.png",
+        "title": "Shayona",
+        "route": "/shayona",
+        # "has_permission": "shayona.api.permission.has_app_permission"
+    }
+]
+
+fixtures = [
+    {"dt": "Custom Field", "filters": [["module", "in", ["Shayona"]]]},
+    {"dt": "Property Setter", "filters": [["module", "in", ["Shayona"]]]},
+]
 
 # Includes in <head>
 # ------------------
@@ -86,13 +95,13 @@ app_license = "mit"
 # ------------
 
 # before_install = "shayona.install.before_install"
-# after_install = "shayona.install.after_install"
+after_install = "shayona.setup.install.after_install"
 
 # Uninstallation
 # ------------
 
 # before_uninstall = "shayona.uninstall.before_uninstall"
-# after_uninstall = "shayona.uninstall.after_uninstall"
+after_uninstall = "shayona.setup.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------
@@ -132,13 +141,13 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Timesheet": {
+        "validate": "shayona.overrides.timesheet.validate",
+        "before_insert": "shayona.overrides.timesheet.before_insert",
+        "before_save": "shayona.overrides.timesheet.before_save",
+    }
+}
 
 # Scheduled Tasks
 # ---------------
@@ -249,4 +258,3 @@ app_license = "mit"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

@@ -1,0 +1,18 @@
+[
+ {
+  "default_value": null,
+  "doc_type": "Timesheet",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "employee",
+  "is_system_generated": 0,
+  "modified": "2026-04-22 16:06:01.448080",
+  "module": "Shayona",
+  "name": "Timesheet-employee-reqd",
+  "property": "reqd",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ }
+]
