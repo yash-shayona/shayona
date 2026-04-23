@@ -52,8 +52,18 @@ fixtures = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+
+doctype_js = {
+    # "doctype" : "public/js/doctype.js",
+    "Timesheet": "public/js/timesheet.js",
+    "Task": ["public/js/task.js"],
+}
+
+doctype_list_js = {
+    # "doctype" : "public/js/doctype_list.js",
+    "Timesheet": "public/js/timesheet_list.js",
+}
+
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -142,11 +152,18 @@ after_uninstall = "shayona.setup.uninstall.after_uninstall"
 # Hook on document methods and events
 
 doc_events = {
+    "Task": {
+        "validate": [
+            "shayona.overrides.task.validate",
+        ],
+        "before_insert": "shayona.overrides.task.before_insert",
+        "before_save": "shayona.overrides.task.before_save",
+    },
     "Timesheet": {
         "validate": "shayona.overrides.timesheet.validate",
         "before_insert": "shayona.overrides.timesheet.before_insert",
         "before_save": "shayona.overrides.timesheet.before_save",
-    }
+    },
 }
 
 # Scheduled Tasks

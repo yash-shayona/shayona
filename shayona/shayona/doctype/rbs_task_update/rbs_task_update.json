@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-26 16:56:59.293219",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "task_update_date",
+  "task_detail",
+  "task_sku",
+  "column_break_wtfc",
+  "task_status",
+  "new_static_product",
+  "existing_static_product",
+  "new_apparel_product",
+  "existing_apparel_product",
+  "new_variable_product",
+  "existing_variable_product",
+  "new_category",
+  "existing_category",
+  "revised_product",
+  "revised_category"
+ ],
+ "fields": [
+  {
+   "fieldname": "task_update_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Task Update Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_detail",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Task Detail"
+  },
+  {
+   "fieldname": "task_sku",
+   "fieldtype": "Long Text",
+   "in_list_view": 1,
+   "label": "Task SKU"
+  },
+  {
+   "fieldname": "column_break_wtfc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "new_static_product",
+   "fieldtype": "Int",
+   "label": "New Static Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "existing_static_product",
+   "fieldtype": "Int",
+   "label": "Existing Static Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "new_apparel_product",
+   "fieldtype": "Int",
+   "label": "New Apparel Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "existing_apparel_product",
+   "fieldtype": "Int",
+   "label": "Existing Apparel Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "new_variable_product",
+   "fieldtype": "Int",
+   "label": "New Variable Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "existing_variable_product",
+   "fieldtype": "Int",
+   "label": "Existing Variable Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "new_category",
+   "fieldtype": "Int",
+   "label": "New Category"
+  },
+  {
+   "default": "0",
+   "fieldname": "existing_category",
+   "fieldtype": "Int",
+   "label": "Existing Category"
+  },
+  {
+   "default": "0",
+   "fieldname": "revised_product",
+   "fieldtype": "Int",
+   "label": "Revised Product"
+  },
+  {
+   "default": "0",
+   "fieldname": "revised_category",
+   "fieldtype": "Int",
+   "label": "Revised Category"
+  },
+  {
+   "fieldname": "task_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nIn Progress\nReceived\nCompleted\nRTS\nSample Out\nCanceled\nOn Hold"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-22 17:09:06.131251",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "RBS Task Update",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
