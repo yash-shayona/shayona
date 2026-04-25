@@ -11,6 +11,7 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "buyer_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -19,6 +20,7 @@
    "unique": 1
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "vibe_id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -29,7 +31,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 11:29:59.089930",
+ "modified": "2026-04-25 12:33:42.154565",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "RBS Buyer",
@@ -49,6 +51,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",

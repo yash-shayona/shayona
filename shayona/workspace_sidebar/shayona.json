@@ -1,0 +1,64 @@
+{
+ "app": "shayona",
+ "creation": "2026-04-21 19:54:49.535235",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "idx": 2,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "shield-user",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "RBS Buyer",
+   "link_to": "RBS Buyer",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "users",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "RBS Buyer User",
+   "link_to": "RBS Buyer User",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "list-checks",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Checklist Items",
+   "link_to": "Checklist Items",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "layout-template",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Checklist Template",
+   "link_to": "Checklist Template",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-04-25 12:30:25.682684",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Shayona",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Shayona"
+}

@@ -10,6 +10,7 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "item",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -21,7 +22,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-27 15:21:09.477004",
+ "modified": "2026-04-25 12:32:28.577922",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Checklist Items",
