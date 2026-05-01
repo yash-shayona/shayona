@@ -1,0 +1,87 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-05 17:43:35.646382",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "timestamp",
+  "active_window",
+  "screenshot",
+  "st_ts",
+  "column_break_nvre",
+  "idle_time_sec",
+  "mouse_count",
+  "keyboard_count",
+  "event_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "active_window",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Active Window"
+  },
+  {
+   "fieldname": "mouse_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Mouse Count "
+  },
+  {
+   "fieldname": "keyboard_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Keyboard Count"
+  },
+  {
+   "fieldname": "idle_time_sec",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Idle Time (Sec.)"
+  },
+  {
+   "fieldname": "column_break_nvre",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "screenshot",
+   "fieldtype": "Attach Image",
+   "label": "Screenshot"
+  },
+  {
+   "fieldname": "timestamp",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Timestamp"
+  },
+  {
+   "fieldname": "st_ts",
+   "fieldtype": "Datetime",
+   "label": "Screenshot Timestamp"
+  },
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Event ID",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-18 17:55:52.636135",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Activity Tracker Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -8,7 +8,7 @@ frappe.ui.form.on("Timesheet", {
     },
 
     validate: function (frm) {
-        check_employee_selected_or_not(frm);
+        // check_employee_selected_or_not(frm);
     }
 });
 
@@ -39,7 +39,7 @@ function manually_timesheet_detail_add_rows(frm) {
 
 function check_employee_selected_or_not(frm) {
     if (!frm.doc.employee) {
-        frappe.msgprint(__("Employee must be selected."));
+        // frappe.msgprint(__("Employee must be selected."));
 
         // Add Frappe "error" highlight
         frm.fields_dict.employee.$wrapper.addClass('has-error highlight');

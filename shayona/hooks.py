@@ -163,29 +163,38 @@ doc_events = {
         "validate": "shayona.overrides.timesheet.validate",
         "before_insert": "shayona.overrides.timesheet.before_insert",
         "before_save": "shayona.overrides.timesheet.before_save",
+        "before_submit": "shayona.overrides.timesheet.before_submit",
     },
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"shayona.tasks.all"
-# 	],
-# 	"daily": [
-# 		"shayona.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"shayona.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"shayona.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"shayona.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+    # 	"all": [
+    # 		"shayona.tasks.all"
+    # 	],
+    # 	"daily": [
+    # 		"shayona.tasks.daily"
+    # 	],
+    # 	"hourly": [
+    # 		"shayona.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"shayona.tasks.weekly"
+    # 	],
+    # 	"monthly": [
+    # 		"shayona.tasks.monthly"
+    # 	],
+    "cron": {
+        "00 19 * * *": [
+            "shayona.overrides.timesheet.auto_submit_timesheet"
+        ],
+        "59 23 * * *": [
+            "shayona.shayona.doctype.activity_tracker.activity_tracker.delete_old_activity_trackers"
+        ],
+    }
+}
 
 # Testing
 # -------
