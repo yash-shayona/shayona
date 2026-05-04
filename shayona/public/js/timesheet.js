@@ -1,40 +1,40 @@
 frappe.ui.form.on("Timesheet", {
-    refresh(frm) {
-        manually_timesheet_detail_add_rows(frm);
+    setup: function (frm) {
+        restrict_time_log_row_modification(frm);
     },
 
     onload: function (frm) {
 
     },
 
+    refresh(frm) {
+
+    },
+
     validate: function (frm) {
-        // check_employee_selected_or_not(frm);
+        check_employee_selected_or_not(frm);
     }
 });
 
-function manually_timesheet_detail_add_rows(frm) {
-    // allowed roles who can manually add rows
-    const allowed_roles = ["System Manager", "HR Manager", "Administrator"];
-
-    let has_access = allowed_roles.some(role => frappe.user_roles.includes(role));
-
-    // child table grid
-    let grid = frm.get_field("time_logs").grid;
-
-    if (!has_access) {
-        console.log(grid);
-
-        // disable add row
-        grid.cannot_add_rows = true;
-
-        // Hide delete icon in toolbar
-        grid.wrapper.find('.grid-remove-rows').hide();
-
-        // Hide duplicate row button
-        grid.wrapper.find('.grid-duplicate-row').hide();
-
-        frm.refresh_field("time_logs");
+function restrict_time_log_row_modification(frm) {
+    if (frappe.session.user === "Administrator") {
+        return;
     }
+
+    const allowed_roles = [
+        "System Manager",
+        "Project Manager",
+        "HR Manager"
+    ];
+
+    const user_roles = frappe.user_roles || [];
+
+    const has_access = user_roles.some(role => allowed_roles.includes(role));
+
+    if (has_access) return;
+
+    frm.set_df_property("time_logs", "cannot_add_rows", true);
+    frm.set_df_property("time_logs", "cannot_delete_rows", true);
 }
 
 function check_employee_selected_or_not(frm) {

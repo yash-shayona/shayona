@@ -5,10 +5,12 @@ from datetime import time
 
 def validate(doc, method):
     check_timesheet_exists(doc)
+    check_employee_set_or_not(doc)
 
 
 def before_insert(doc, method):
     set_timesheet_day(doc)
+    set_company(doc)
 
 
 def before_save(doc, method):
@@ -45,6 +47,11 @@ def calculate_break_adjustment(doc):
     doc.custom_total_effective_hours = effective_hours
 
 
+def check_employee_set_or_not(doc):
+    if not doc.employee:
+        frappe.throw("Employee must be selected.")
+
+
 def check_timesheet_exists(doc):
     ts_date = getdate(doc.start_date)
 
@@ -68,6 +75,12 @@ def set_timesheet_day(doc):
     if not doc.get("custom_day"):
         doc.custom_day = getdate(doc.start_date).strftime("%A")
         print(doc.as_dict())
+
+
+def set_company(doc):
+    if not doc.company:
+        company = frappe.db.get_value("Employee", doc.employee, "company")
+        doc.company = company
 
 
 def calculate_total_break_hours(doc):
