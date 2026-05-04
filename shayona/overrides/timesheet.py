@@ -2,22 +2,51 @@ import frappe
 from frappe.utils import getdate, get_datetime
 from datetime import time
 
+
 def validate(doc, method):
     check_timesheet_exists(doc)
-    can_not_add_manual_time_log_entry(doc)
+
 
 def before_insert(doc, method):
     set_timesheet_day(doc)
 
+
 def before_save(doc, method):
     calculate_total_break_hours(doc)
 
+
 def before_submit(doc, method):
+    set_auto_submit_flag(doc)
+    calculate_break_adjustment(doc)
+
+
+def set_auto_submit_flag(doc):
     if not doc.custom_auto_submit or doc.custom_auto_submit != "Yes":
         doc.custom_auto_submit = "No"
 
+
+def calculate_break_adjustment(doc):
+
+    IDEAL_BREAK = 35 / 60  # 0.5833 hr
+
+    total_break = 0
+
+    for row in doc.time_logs:
+        if row.activity_type == "Break":
+            total_break += row.hours or 0
+
+    # update again (source of truth)
+    doc.custom_total_break_hours = total_break
+
+    total_hours = doc.total_hours or 0
+
+    effective_hours = total_hours + (IDEAL_BREAK - total_break)
+
+    doc.custom_total_effective_hours = effective_hours
+
+
 def check_timesheet_exists(doc):
-    ts_date = getdate(doc.start_date or doc.start_time)
+    ts_date = getdate(doc.start_date)
 
     exists = frappe.db.exists(
         "Timesheet",
@@ -25,8 +54,8 @@ def check_timesheet_exists(doc):
             "employee": doc.employee,
             "start_date": ts_date,
             "name": ["!=", doc.name],  # ignore same doc
-            "docstatus": ["!=", 2]
-        }
+            "docstatus": ["!=", 2],
+        },
     )
 
     if exists:
@@ -34,10 +63,12 @@ def check_timesheet_exists(doc):
             f"Timesheet already exists for employee <b>{doc.employee_name}</b> on date <b>{ts_date.__format__('%d-%m-%Y')}</b>."
         )
 
+
 def set_timesheet_day(doc):
     if not doc.get("custom_day"):
         doc.custom_day = getdate(doc.start_date).strftime("%A")
         print(doc.as_dict())
+
 
 def calculate_total_break_hours(doc):
     custom_total_break_hours = 0
@@ -47,29 +78,19 @@ def calculate_total_break_hours(doc):
 
     doc.custom_total_break_hours = custom_total_break_hours
 
-def can_not_add_manual_time_log_entry(doc):
-    allowed_roles = ["System Manager", "HR Manager", "Administrator"]
-
-    if not any(frappe.has_role(role) for role in allowed_roles):
-        for row in doc.time_logs:
-            if row.is_manual_entry:
-                frappe.throw("Employees cannot manually add time log entries.")
 
 def auto_submit_timesheet():
     today = getdate()
-    
+
     timesheets = frappe.get_all(
         "Timesheet",
         fields=["name", "status", "employee", "employee_name"],
-        filters={
-            "start_date": today,
-            "docstatus": 0
-        }
+        filters={"start_date": today, "docstatus": 0},
     )
 
     for ts in timesheets:
         doc = frappe.get_doc("Timesheet", ts.name)
-        
+
         for log in doc.time_logs:
             if log.from_time and not log.to_time:
                 log.to_time = get_datetime()
@@ -82,4 +103,6 @@ def auto_submit_timesheet():
             doc.submit()
             frappe.db.commit()
         except Exception as e:
-            frappe.log_error(frappe.get_traceback(), f"Auto Submit Timesheet Failed: {doc.name}")
+            frappe.log_error(
+                frappe.get_traceback(), f"Auto Submit Timesheet Failed: {doc.name}"
+            )

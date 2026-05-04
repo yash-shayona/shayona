@@ -35,7 +35,7 @@ fixtures = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/shayona/css/shayona.css"
-# app_include_js = "/assets/shayona/js/shayona.js"
+# app_include_js = "/assets/shayona/js/shayona_notifications.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/shayona/css/shayona.css"
@@ -57,6 +57,7 @@ doctype_js = {
     # "doctype" : "public/js/doctype.js",
     "Timesheet": "public/js/timesheet.js",
     "Task": ["public/js/task.js"],
+    "Holiday List": "public/js/holiday_list.js",
 }
 
 doctype_list_js = {
@@ -152,6 +153,9 @@ after_uninstall = "shayona.setup.uninstall.after_uninstall"
 # Hook on document methods and events
 
 doc_events = {
+    # "Notification Log": {
+    #     "after_insert": "shayona.overrides.notifications.publish_alert_popup_event",
+    # },
     "Task": {
         "validate": [
             "shayona.overrides.task.validate",
@@ -164,6 +168,9 @@ doc_events = {
         "before_insert": "shayona.overrides.timesheet.before_insert",
         "before_save": "shayona.overrides.timesheet.before_save",
         "before_submit": "shayona.overrides.timesheet.before_submit",
+    },
+    "Holiday List": {
+        "before_save": "shayona.overrides.holiday_list.before_save",
     },
 }
 
@@ -187,7 +194,7 @@ scheduler_events = {
     # 		"shayona.tasks.monthly"
     # 	],
     "cron": {
-        "00 19 * * *": [
+        "00 22 * * *": [
             "shayona.overrides.timesheet.auto_submit_timesheet"
         ],
         "59 23 * * *": [
