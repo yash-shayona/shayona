@@ -4,11 +4,11 @@ frappe.ui.form.on("Timesheet", {
     },
 
     onload: function (frm) {
-
+        restrict_time_log_row_modification(frm);
     },
 
     refresh(frm) {
-
+        restrict_time_log_row_modification(frm);
     },
 
     validate: function (frm) {
@@ -35,6 +35,7 @@ function restrict_time_log_row_modification(frm) {
 
     frm.set_df_property("time_logs", "cannot_add_rows", true);
     frm.set_df_property("time_logs", "cannot_delete_rows", true);
+    frm.set_df_property("time_logs", "read_only", true);
 }
 
 function check_employee_selected_or_not(frm) {

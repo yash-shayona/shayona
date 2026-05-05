@@ -2,7 +2,6 @@ import frappe
 from frappe.utils import get_datetime
 
 def validate(doc, method):
-    # frappe.msgprint("hooks from Shayona")
     check_custom_rbs_task_update_date(doc)
 
 def before_insert(doc, method):

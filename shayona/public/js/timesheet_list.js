@@ -1,6 +1,10 @@
 frappe.listview_settings['Timesheet'] = {
     onload: function (listview) {
-        if (frappe.user.has_role("Employee") && !frappe.user.has_role("Administrator")) {
+        if (frappe.session.user === "Administrator") {
+            return;
+        }
+
+        if (frappe.user.has_role("Employee")) {
             // Wait 200ms so that the dropdown menu is created
             setTimeout(() => {
                 // Hide Report View item

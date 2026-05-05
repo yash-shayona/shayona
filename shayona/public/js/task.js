@@ -1,14 +1,18 @@
 frappe.ui.form.on("Task", {
-    refresh: function (frm) {
-
+    setup: function (frm) {
+        restrict_rbs_task_row_modification(frm);
     },
 
     onload: function (frm) {
-        toggle_add_row_button(frm, "custom_rbs_task");
+        restrict_rbs_task_row_modification(frm);
+    },
+
+    refresh: function (frm) {
+        restrict_rbs_task_row_modification(frm);
     },
 
     onload_post_render: function (frm) {
-        
+
     },
 
     validate(frm) {
@@ -26,11 +30,11 @@ frappe.ui.form.on("Task", {
 
 frappe.ui.form.on("RBS Task", {
     custom_rbs_task_add: function (frm, cdt, cdn) {
-        toggle_add_row_button(frm, "custom_rbs_task");
+        restrict_rbs_task_row_modification(frm);
     },
 
     custom_rbs_task_remove: function (frm, cdt, cdn) {
-        toggle_add_row_button(frm, "custom_rbs_task");
+        restrict_rbs_task_row_modification(frm);
     },
 
     vibe_id(frm, cdt, cdn) {
@@ -55,25 +59,37 @@ frappe.ui.form.on("RBS Task Update", {
     }
 });
 
-function toggle_add_row_button(frm, ctfn) {
-    setTimeout(() => {
-        let table = frm.get_field(ctfn).grid;
-        const child_table_field_name = ctfn;
+function restrict_rbs_task_row_modification(frm) {
+    // Skip for Administrator
+    if (frappe.session.user === "Administrator") {
+        return;
+    }
 
-        if (frm.doc[child_table_field_name] && frm.doc[child_table_field_name].length >= 1) {
-            // Hide the add row button this is actual work
-            frm.get_field(child_table_field_name).grid.cannot_add_rows = true;
-            table.wrapper.find('.grid-remove-rows').hide();
-            table.wrapper.find('.grid-duplicate-rows').hide();
-            frm.refresh_field(child_table_field_name);
-        } else {
-            // this is actual work
-            frm.get_field(child_table_field_name).grid.cannot_add_rows = false;
-            table.wrapper.find('.grid-remove-rows').show();
-            table.wrapper.find('.grid-duplicate-rows').show();
-            frm.refresh_field(child_table_field_name);
-        }
-    }, 100);
+    const allowed_roles = [
+        "System Manager",
+        "Project Manager",
+        "HR Manager"
+    ];
+
+    const user_roles = frappe.user_roles || [];
+    const has_access = user_roles.some(role => allowed_roles.includes(role));
+
+    // If privileged user → no restriction
+    if (has_access) {
+        frm.set_df_property("custom_rbs_task", "cannot_add_rows", false);
+        return;
+    }
+
+    let row_count = (frm.doc.custom_rbs_task || []).length;
+
+    if (row_count >= 1) {
+        frm.set_df_property("custom_rbs_task", "cannot_add_rows", true);
+        frm.set_df_property("custom_rbs_task", "cannot_delete_rows", true);
+    } else {
+        frm.set_df_property("custom_rbs_task", "cannot_add_rows", false);
+    }
+
+    frm.refresh_field("custom_rbs_task");
 }
 
 function task_type_change(frm) {
