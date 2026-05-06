@@ -2,6 +2,13 @@ import frappe
 from frappe.utils import get_datetime
 
 
+def is_regency(doc):
+    """Check custom_project_type field exists and is 'regency'"""
+    if not hasattr(doc, "custom_project_type"):
+        return False
+    return (doc.custom_project_type or "").lower() == "regency"
+
+
 def validate(doc, method):
     check_duplicate_subject(doc)
     check_custom_rbs_task_update_date(doc)
@@ -9,10 +16,11 @@ def validate(doc, method):
 
 
 def before_insert(doc, method):
-    set_default_rbs_task_row(doc)
+    pass
 
 
 def before_save(doc, method):
+    set_default_rbs_task_row(doc)
     set_default_rbs_task_update_row(doc)
     handle_status_change_to_update_table(doc)
 
@@ -37,7 +45,7 @@ def check_duplicate_subject(doc):
 
 
 def check_custom_rbs_task_update_date(doc):
-    if not (doc.type or "").lower() == "regency":
+    if not is_regency(doc):
         return
 
     if doc.custom_rbs_task and len(doc.custom_rbs_task) > 0:
@@ -53,7 +61,7 @@ def validate_on_completed(doc):
     1. RBS Task row must have buyer_name, buyer_user_name, vibe_id
     2. All rows in RBS Task Update must have task_status = Completed
     """
-    if not (doc.type or "").lower() == "regency":
+    if not is_regency(doc):
         return
 
     if doc.status != "Completed":
@@ -111,7 +119,7 @@ def validate_on_completed(doc):
 
 
 def set_default_rbs_task_row(doc):
-    if not (doc.type or "").lower() == "regency":
+    if not is_regency(doc):
         return
 
     # Get today's date once
@@ -136,7 +144,7 @@ def set_default_rbs_task_row(doc):
 
 
 def set_default_rbs_task_update_row(doc):
-    if not (doc.type or "").lower() == "regency":
+    if not is_regency(doc):
         return
 
     if not doc.get("custom_rbs_task_update") or len(doc.custom_rbs_task_update) == 0:
@@ -154,7 +162,7 @@ def handle_status_change_to_update_table(doc):
     if doc.is_new():
         return
 
-    if not (doc.type or "").lower() == "regency":
+    if not is_regency(doc):
         return
 
     # Statuses that trigger a new update row
