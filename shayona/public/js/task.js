@@ -93,52 +93,60 @@ function restrict_rbs_task_row_modification(frm) {
 }
 
 function task_type_change(frm) {
-    if (!frm.doc.type) {
+    if (!frm.doc.type || (frm.doc.type).toLowerCase() != "regency") {
         frm.clear_table("task_checklist");
         frm.refresh_field("task_checklist");
         return;
     }
 
-    // STEP 1: Load template
-    frappe.call({
-        method: "frappe.client.get",
-        args: {
-            doctype: "Checklist Template",
-            name: frm.doc.type
-        },
-        callback: function (template_res) {
-            if (!template_res.message) return;
-
-            // STEP 2: Load saved checklist first
-            frappe.call({
-                method: "shayona.shayona.doctype.task_checklist.task_checklist.get_task_checklist",
-                args: { task: frm.doc.name },
-                callback: function (saved_res) {
-                    let saved_list = saved_res.message || [];
-
-                    // Clear old table
-                    frm.clear_table("custom_task_checklist");
-
-                    if (!template_res.message.items.length) return;
-                    template_res.message.items.forEach(template_row => {
-                        let exists = saved_list.some(s => s.item === template_row.item);
-                        if (frm.doc.custom_task_checklist.length < template_res.message.items.length) {
-                            let row = frm.add_child("custom_task_checklist");
-                            row.item = exists ? saved_list.find(s => s.item === template_row.item).item : template_row.item;
-                            row.done = exists ? saved_list.find(s => s.item === template_row.item).done : 0;
-                        }
-                    });
-                    // Expand section
-                    // frm.fields_dict.sb_checklist.collapse(false);
-                    // Refresh
-                    frm.refresh_field("custom_task_checklist");
-                }
-            });
-        },
-        error: function (err) {
-            frm.clear_table("task_checklist");
-            frm.refresh_field("task_checklist");
+    frappe.db.exists(
+        "Checklist Template",
+        frm.doc.type
+    ).then(exists => {
+        if (!exists) {
+            return;
         }
+        // STEP 1: Load template
+        frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "Checklist Template",
+                name: frm.doc.type
+            },
+            callback: function (template_res) {
+                if (!template_res.message) return;
+
+                // STEP 2: Load saved checklist first
+                frappe.call({
+                    method: "shayona.shayona.doctype.task_checklist.task_checklist.get_task_checklist",
+                    args: { task: frm.doc.name },
+                    callback: function (saved_res) {
+                        let saved_list = saved_res.message || [];
+
+                        // Clear old table
+                        frm.clear_table("custom_task_checklist");
+
+                        if (!template_res.message.items.length) return;
+                        template_res.message.items.forEach(template_row => {
+                            let exists = saved_list.some(s => s.item === template_row.item);
+                            if (frm.doc.custom_task_checklist.length < template_res.message.items.length) {
+                                let row = frm.add_child("custom_task_checklist");
+                                row.item = exists ? saved_list.find(s => s.item === template_row.item).item : template_row.item;
+                                row.done = exists ? saved_list.find(s => s.item === template_row.item).done : 0;
+                            }
+                        });
+                        // Expand section
+                        // frm.fields_dict.sb_checklist.collapse(false);
+                        // Refresh
+                        frm.refresh_field("custom_task_checklist");
+                    }
+                });
+            },
+            error: function (err) {
+                frm.clear_table("task_checklist");
+                frm.refresh_field("task_checklist");
+            }
+        });
     });
 }
 

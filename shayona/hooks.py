@@ -20,7 +20,7 @@ add_to_apps_screen = [
         "name": "shayona",
         "logo": "/assets/shayona/images/brand.png",
         "title": "Shayona",
-        "route": "/shayona",
+        "route": "/desk/shayona",
         # "has_permission": "shayona.api.permission.has_app_permission"
     }
 ]
@@ -36,6 +36,10 @@ fixtures = [
 # include js, css files in header of desk.html
 # app_include_css = "/assets/shayona/css/shayona.css"
 # app_include_js = "/assets/shayona/js/shayona_notifications.js"
+
+app_include_js = [
+    "/assets/shayona/js/timesheet_timer_override.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/shayona/css/shayona.css"
