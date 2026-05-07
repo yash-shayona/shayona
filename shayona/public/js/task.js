@@ -93,9 +93,9 @@ function restrict_rbs_task_row_modification(frm) {
 }
 
 function task_type_change(frm) {
-    if (!frm.doc.type || (frm.doc.type).toLowerCase() != "regency") {
-        frm.clear_table("task_checklist");
-        frm.refresh_field("task_checklist");
+    if (!frm.doc.type) {
+        frm.clear_table("custom_task_checklist");
+        frm.refresh_field("custom_task_checklist");
         return;
     }
 
@@ -143,8 +143,8 @@ function task_type_change(frm) {
                 });
             },
             error: function (err) {
-                frm.clear_table("task_checklist");
-                frm.refresh_field("task_checklist");
+                frm.clear_table("custom_task_checklist");
+                frm.refresh_field("custom_task_checklist");
             }
         });
     });

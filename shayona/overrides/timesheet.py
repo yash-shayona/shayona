@@ -31,13 +31,19 @@ def calculate_break_adjustment(doc):
 
     IDEAL_BREAK = 35 / 60  # 0.5833 hr
 
+    total_hours = doc.total_hours or 0
+
+    # If no working hours, don't apply any break deduction
+    if total_hours <= 0:
+        doc.custom_total_break_hours = 0
+        doc.custom_total_effective_hours = 0
+        return
+
     total_break = 0
 
     for row in doc.time_logs:
         if row.activity_type == "Break":
             total_break += row.hours or 0
-
-    total_hours = doc.total_hours or 0
 
     if total_break == 0:
         # No break logged → assume ideal break was taken → deduct it
@@ -48,7 +54,7 @@ def calculate_break_adjustment(doc):
         doc.custom_total_break_hours = total_break
         effective_hours = total_hours + (IDEAL_BREAK - total_break)
 
-    doc.custom_total_effective_hours = effective_hours
+    doc.custom_total_effective_hours = max(effective_hours, 0)
 
 
 def check_employee_set_or_not(doc):

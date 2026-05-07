@@ -658,7 +658,7 @@
   "collapsible_depends_on": "eval:doc.custom_task_checklist && doc.custom_task_checklist.length && doc.custom_task_checklist[0].item",
   "columns": 0,
   "default": null,
-  "depends_on": "eval:doc.type=='Regency';",
+  "depends_on": "eval:doc.type;",
   "description": null,
   "docstatus": 0,
   "doctype": "Custom Field",

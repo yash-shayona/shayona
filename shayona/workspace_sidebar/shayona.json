@@ -87,10 +87,22 @@
    "link_type": "Report",
    "show_arrow": 0,
    "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "chart",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Timesheet Custom Report",
+   "link_to": "Timesheet Custom Report",
+   "link_type": "Report",
+   "show_arrow": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-05-06 10:32:36.735405",
- "modified_by": "Administrator",
+ "modified": "2026-05-07 10:03:25.751318",
+ "modified_by": "yashsolanki@shayonatechnology.com",
  "module": "Shayona",
  "name": "Shayona",
  "owner": "Administrator",

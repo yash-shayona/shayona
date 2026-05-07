@@ -1,0 +1,27 @@
+{
+ "app": "shayona",
+ "creation": "2026-05-07 10:24:23.877140",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Timesheet",
+   "link_to": "Timesheet",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-05-07 10:42:49.172875",
+ "modified_by": "yashsolanki@shayonatechnology.com",
+ "module": "Projects",
+ "name": "Timesheet",
+ "owner": "yashsolanki@shayonatechnology.com",
+ "standard": 1,
+ "title": "Timesheet"
+}
