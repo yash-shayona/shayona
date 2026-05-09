@@ -87,7 +87,9 @@ def validate_on_completed(doc):
         missing_list = "".join(f"<li><b>{field}</b></li>" for field in missing)
 
         frappe.throw(
+            f"Task: <b><a href='/desk/task/{doc.name}'>{doc.subject}</a></b><br>"
             f"Cannot mark task as <b>Completed</b>.<br>"
+            f"First, Go to the <b>RBS Task</b> Tab in Tabbar.<br>"
             f"Please fill the following fields in RBS Task table:<br>"
             f"<ul>{missing_list}</ul>"
         )
@@ -105,14 +107,16 @@ def validate_on_completed(doc):
                 )
 
             if not row.get("task_detail"):
-                row_errors.append("Task Detail is empty")
+                row_errors.append("Task Detail is empty (must be filled)")
 
             if row_errors:
                 errors.append(f"Row {i + 1}: " + " &amp; ".join(row_errors))
 
         if errors:
             frappe.throw(
+                f"Task: <b><a href='/desk/task/{doc.name}'>{doc.subject}</a></b><br>"
                 "Cannot mark task as <b>Completed</b>.<br>"
+                "First, Go to the <b>RBS Task</b> Tab in Tabbar.<br>"
                 "Please fix the following in RBS Task Update table:<br><br>"
                 + "<br>".join(errors)
             )

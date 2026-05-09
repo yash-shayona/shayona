@@ -45,6 +45,14 @@ def calculate_break_adjustment(doc):
         if row.activity_type == "Break":
             total_break += row.hours or 0
 
+    actual_work = total_hours - total_break
+
+    # only breaks logged
+    if actual_work <= 0:
+        doc.custom_total_break_hours = total_break
+        doc.custom_total_effective_hours = 0
+        return
+
     if total_break == 0:
         # No break logged → assume ideal break was taken → deduct it
         doc.custom_total_break_hours = IDEAL_BREAK

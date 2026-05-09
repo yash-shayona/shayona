@@ -38,6 +38,7 @@ fixtures = [
 # app_include_js = "/assets/shayona/js/shayona_notifications.js"
 
 app_include_js = [
+    # "/assets/shayona/js/shayona_notifications.js",
     "/assets/shayona/js/timesheet_timer_override.js",
 ]
 

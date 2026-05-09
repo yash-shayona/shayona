@@ -40,7 +40,16 @@ frappe.ui.form.on("RBS Task", {
     vibe_id(frm, cdt, cdn) {
         let row = locals[cdt][cdn];
 
-        frappe.db.get_value("RBS Buyer", { "vibe_id": row.vibe_id },
+        if (!row.vibe_id) {
+            frappe.model.set_value(cdt, cdn, "buyer_name", "");
+            return;
+        }
+
+        frappe.db.get_value(
+            "RBS Buyer",
+            {
+                "vibe_id": row.vibe_id
+            },
             ["buyer_name"]
         ).then(r => {
             if (r.message.buyer_name) {
@@ -151,10 +160,12 @@ function task_type_change(frm) {
 }
 
 function check_custom_rbs_task_update_date(frm) {
-    if (frm.doc.custom_rbs_task_update) {
-        for (let i = 0; i < frm.doc.custom_rbs_task_update.length; i++) {
-            if (frm.doc.custom_rbs_task_update[i].task_update_date < frm.doc.custom_rbs_task[0].task_date) {
-                frappe.throw("Task Update Date cannot be before Task Date");
+    if (frm.doc.custom_rbs_task && frm.doc.custom_rbs_task.length) {
+        if (frm.doc.custom_rbs_task_update) {
+            for (let i = 0; i < frm.doc.custom_rbs_task_update.length; i++) {
+                if (frm.doc.custom_rbs_task_update[i].task_update_date < frm.doc.custom_rbs_task[0].task_date) {
+                    frappe.throw("Task Update Date cannot be before Task Date");
+                }
             }
         }
     }
