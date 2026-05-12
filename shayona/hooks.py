@@ -199,7 +199,7 @@ scheduler_events = {
     # 		"shayona.tasks.monthly"
     # 	],
     "cron": {
-        "00 22 * * *": ["shayona.overrides.timesheet.auto_submit_timesheet"],
+        "00 22 * * *": ["shayona.mixins.timesheet.auto_submit_timesheet"],
         "59 23 * * *": [
             "shayona.shayona.doctype.activity_tracker.activity_tracker.delete_old_activity_trackers"
         ],
@@ -215,9 +215,10 @@ scheduler_events = {
 # ------------------------------
 #
 # Specify custom mixins to extend the standard doctype controller.
-# extend_doctype_class = {
-# 	"Task": "shayona.custom.task.CustomTaskMixin"
-# }
+extend_doctype_class = {
+    "Task": "shayona.mixins.task.TaskMixin",
+    "Timesheet": "shayona.mixins.timesheet.TimesheetMixin",
+}
 
 # Overriding Methods
 # ------------------------------
