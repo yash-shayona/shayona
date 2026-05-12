@@ -14,6 +14,7 @@ frappe.listview_settings['Task'] = {
             "Template": "blue",
             "RTS Info Needed": "blue",
             "Revisions Needed": "blue",
+            "On Hold": "dark grey",
         };
         return [__(doc.status), colors[doc.status], "status,=," + doc.status];
     }

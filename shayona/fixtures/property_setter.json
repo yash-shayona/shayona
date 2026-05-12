@@ -103,13 +103,13 @@
   "doctype_or_field": "DocField",
   "field_name": "status",
   "is_system_generated": 0,
-  "modified": "2026-05-06 13:50:41.867708",
+  "modified": "2026-05-12 15:57:39.459901",
   "module": "Shayona",
   "name": "Task-status-Options",
   "property": "options",
   "property_type": "SmallText",
   "row_name": null,
-  "value": "Open\nWorking\nRTS Info Needed\nRevisions Needed\nPending Review\nOverdue\nTemplate\nCompleted\nCancelled"
+  "value": "Open\nWorking\nRTS Info Needed\nRevisions Needed\nOn Hold\nPending Review\nOverdue\nTemplate\nCompleted\nCancelled"
  },
  {
   "default_value": null,

@@ -18,25 +18,6 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 1,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "RBS Task Report",
-   "link_count": 0,
-   "link_to": "RBS Task Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
    "label": "RBS",
    "link_count": 4,
    "link_type": "DocType",
@@ -82,9 +63,38 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "RBS Task Report",
+   "link_count": 0,
+   "link_to": "RBS Task Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Timesheet Custom Report",
+   "link_count": 0,
+   "link_to": "Timesheet Custom Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-05-06 10:36:25.636445",
+ "modified": "2026-05-12 15:09:27.283074",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Shayona",

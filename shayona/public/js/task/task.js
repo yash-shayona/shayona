@@ -126,6 +126,13 @@ function set_status_based_on_task_status(frm, cdt, cdn) {
             "status",
             "Cancelled"
         );
+    } else if (row.task_status === "On Hold") {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "status",
+            "On Hold"
+        );
     } else {
         // If any task is not completed, set status to Open
         let all_tasks = frm.doc.custom_rbs_task || [];
