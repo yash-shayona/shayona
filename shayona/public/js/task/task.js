@@ -25,8 +25,24 @@ frappe.ui.form.on("Task", {
 
     after_save(frm) {
 
+    },
+
+    status(frm) {
+        set_completed_on(frm);
     }
 });
+
+function set_completed_on(frm) {
+    // status => complete → set completion date to today if not set
+    if (frm.doc.status === "Completed" && !frm.doc.completed_on) {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "completed_on",
+            frappe.datetime.get_today()
+        );
+    }
+}
 
 frappe.ui.form.on("RBS Task", {
     custom_rbs_task_add: function (frm, cdt, cdn) {
@@ -65,8 +81,65 @@ frappe.ui.form.on("RBS Task", {
 frappe.ui.form.on("RBS Task Update", {
     refresh: function (frm) {
 
+    },
+
+    task_status(frm, cdt, cdn) {
+        set_status_based_on_task_status(frm, cdt, cdn);
     }
 });
+
+function set_status_based_on_task_status(frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+
+    if (row.task_status === "Completed") {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "status",
+            "Completed"
+        );
+    } else if (row.task_status === "RTS Info Needed") {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "status",
+            "RTS Info Needed"
+        );
+    } else if (row.task_status === "Revisions Needed") {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "status",
+            "Revisions Needed"
+        );
+    } else if (row.task_status === "In Progress") {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "status",
+            "Working"
+        );
+    } else if (row.task_status === "Cancelled") {
+        frappe.model.set_value(
+            frm.doctype,
+            frm.docname,
+            "status",
+            "Cancelled"
+        );
+    } else {
+        // If any task is not completed, set status to Open
+        let all_tasks = frm.doc.custom_rbs_task || [];
+        let any_open = all_tasks.some(t => t.task_status !== "Completed");
+        if (any_open) {
+            frappe.model.set_value(
+                frm.doctype,
+                frm.docname,
+                "status",
+                "Open"
+            );
+        }
+    }
+}
 
 function restrict_rbs_task_row_modification(frm) {
     // Skip for Administrator
@@ -76,7 +149,8 @@ function restrict_rbs_task_row_modification(frm) {
 
     const allowed_roles = [
         "System Manager",
-        "Project Manager",
+        "Projects Manager",
+        "Projects User",
         "HR Manager"
     ];
 

@@ -23,7 +23,8 @@ function restrict_time_log_row_modification(frm) {
 
     const allowed_roles = [
         "System Manager",
-        "Project Manager",
+        "Projects Manager",
+        "Projects User",
         "HR Manager"
     ];
 
@@ -36,6 +37,21 @@ function restrict_time_log_row_modification(frm) {
     frm.set_df_property("time_logs", "cannot_add_rows", true);
     frm.set_df_property("time_logs", "cannot_delete_rows", true);
     frm.set_df_property("time_logs", "read_only", true);
+
+    // child table field controls
+    // const grid = frm.fields_dict.time_logs.grid;
+
+    // // readonly fields
+    // grid.update_docfield_property("hours", "read_only", 1);
+    // grid.update_docfield_property("from_time", "read_only", 1);
+    // grid.update_docfield_property("to_time", "read_only", 1);
+    // grid.update_docfield_property("completed", "read_only", 1);
+
+    // editable fields
+    // grid.update_docfield_property("task", "read_only", 0);
+    // grid.update_docfield_property("project", "read_only", 0);
+
+    frm.refresh_field("time_logs");
 }
 
 function check_employee_selected_or_not(frm) {

@@ -1,11 +1,75 @@
 import frappe
 from frappe.utils import getdate, get_datetime
 from datetime import time
+from erpnext.projects.doctype.timesheet.timesheet import Timesheet
+from shayona.overrides.task import is_regency
+
+
+class CustomTimesheet(Timesheet):
+    def update_task_and_project(self):
+        tasks, projects = [], []
+
+        for data in self.time_logs:
+
+            # -----------------------------
+            # TASK UPDATE
+            # -----------------------------
+            if data.task and data.task not in tasks:
+
+                task = frappe.get_doc("Task", data.task)
+
+                # ERPNext original logic
+                task.update_time_and_costing()
+
+                # Check all time logs completed
+                time_logs_completed = all(
+                    tl.completed for tl in self.time_logs if tl.task == task.name
+                )
+
+                # -----------------------------------------
+                # CUSTOM LOGIC FOR REGENCY PROJECTS
+                # -----------------------------------------
+                if is_regency(task):
+                    pass
+                else:
+                    # ERPNext default behavior
+                    if time_logs_completed:
+                        task.status = "Completed"
+                    else:
+                        task.status = "Working"
+
+                # -----------------------------------------
+                # PASS CUSTOM FLAG
+                # -----------------------------------------
+                task.flags.from_timesheet = True
+
+                # Save task
+                task.save(ignore_permissions=True)
+
+                tasks.append(data.task)
+
+            # -----------------------------
+            # PROJECT TRACKING
+            # -----------------------------
+            if data.project and data.project not in projects:
+                projects.append(data.project)
+
+        # -----------------------------
+        # PROJECT UPDATE
+        # -----------------------------
+        for project in projects:
+            project_doc = frappe.get_doc("Project", project)
+
+            # ERPNext original logic
+            project_doc.update_project()
+
+            project_doc.save(ignore_permissions=True)
 
 
 def validate(doc, method):
     check_timesheet_exists(doc)
     check_employee_set_or_not(doc)
+    allow_timer_start_end(doc)
 
 
 def before_insert(doc, method):
@@ -28,7 +92,6 @@ def set_auto_submit_flag(doc):
 
 
 def calculate_break_adjustment(doc):
-
     IDEAL_BREAK = 35 / 60  # 0.5833 hr
 
     total_hours = doc.total_hours or 0
@@ -54,9 +117,9 @@ def calculate_break_adjustment(doc):
         return
 
     if total_break == 0:
-        # No break logged → assume ideal break was taken → deduct it
-        doc.custom_total_break_hours = IDEAL_BREAK
-        effective_hours = total_hours - IDEAL_BREAK
+        # No break logged → no deduction
+        doc.custom_total_break_hours = 0
+        effective_hours = total_hours
     else:
         # Break logged → adjust based on deviation from ideal
         doc.custom_total_break_hours = total_break
@@ -68,6 +131,37 @@ def calculate_break_adjustment(doc):
 def check_employee_set_or_not(doc):
     if not doc.employee:
         frappe.throw("Employee must be selected.")
+
+
+def allow_timer_start_end(doc):
+    allowed_start = time(8, 30)
+    allowed_end = time(20, 30)
+
+    for tl in doc.time_logs:
+        if not tl.from_time:
+            continue
+
+        from_dt = get_datetime(tl.from_time)
+        if not from_dt:
+            continue
+
+        from_time = from_dt.time()
+        if from_time < allowed_start:
+            frappe.throw("You cannot start the timer before 8:30 AM.")
+
+        # Validate stop-time only when it is actually set.
+        if tl.to_time:
+            # Skip validation during auto submit
+            if doc.custom_auto_submit == "Yes":
+                continue
+
+            to_dt = get_datetime(tl.to_time)
+            if not to_dt:
+                continue
+
+            to_time = to_dt.time()
+            if to_time > allowed_end:
+                frappe.throw("You cannot stop the timer after 8:30 PM.")
 
 
 def check_timesheet_exists(doc):
@@ -133,7 +227,7 @@ def auto_submit_timesheet():
             doc.save(ignore_permissions=True)
             doc.submit()
             frappe.db.commit()
-        except Exception as e:
+        except Exception:
             frappe.log_error(
                 frappe.get_traceback(), f"Auto Submit Timesheet Failed: {doc.name}"
             )

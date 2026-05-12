@@ -39,7 +39,7 @@ fixtures = [
 
 app_include_js = [
     # "/assets/shayona/js/shayona_notifications.js",
-    "/assets/shayona/js/timesheet_timer_override.js",
+    "/assets/shayona/js/timesheet/timesheet_timer_override.js",
 ]
 
 # include js, css files in header of web template
@@ -60,14 +60,14 @@ app_include_js = [
 
 doctype_js = {
     # "doctype" : "public/js/doctype.js",
-    "Timesheet": "public/js/timesheet.js",
-    "Task": ["public/js/task.js"],
-    "Holiday List": "public/js/holiday_list.js",
+    "Timesheet": "public/js/timesheet/timesheet.js",
+    "Task": ["public/js/task/task.js"],
 }
 
 doctype_list_js = {
     # "doctype" : "public/js/doctype_list.js",
-    "Timesheet": "public/js/timesheet_list.js",
+    "Timesheet": "public/js/timesheet/timesheet_list.js",
+    "Task": "public/js/task/task_list.js",
 }
 
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -145,13 +145,13 @@ after_uninstall = "shayona.setup.uninstall.after_uninstall"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
+permission_query_conditions = {
+    "Task": "shayona.permissions.task.get_permission_query_conditions",
+}
 #
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+has_permission = {
+    # "Task": "shayona.permissions.task.has_permission",
+}
 
 # Document Events
 # ---------------
@@ -199,9 +199,7 @@ scheduler_events = {
     # 		"shayona.tasks.monthly"
     # 	],
     "cron": {
-        "00 22 * * *": [
-            "shayona.overrides.timesheet.auto_submit_timesheet"
-        ],
+        "00 22 * * *": ["shayona.overrides.timesheet.auto_submit_timesheet"],
         "59 23 * * *": [
             "shayona.shayona.doctype.activity_tracker.activity_tracker.delete_old_activity_trackers"
         ],
@@ -234,6 +232,10 @@ scheduler_events = {
 # override_doctype_dashboards = {
 # 	"Task": "shayona.task.get_dashboard_data"
 # }
+
+override_doctype_class = {
+    "Timesheet": "shayona.overrides.timesheet.CustomTimesheet",
+}
 
 # exempt linked doctypes from being automatically cancelled
 #

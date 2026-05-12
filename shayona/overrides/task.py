@@ -61,6 +61,10 @@ def validate_on_completed(doc):
     1. RBS Task row must have buyer_name, buyer_user_name, vibe_id
     2. All rows in RBS Task Update must have task_status = Completed
     """
+    # Skip validation if status changed from Timesheet
+    if getattr(doc.flags, "from_timesheet", False):
+        return
+
     if not is_regency(doc):
         return
 
