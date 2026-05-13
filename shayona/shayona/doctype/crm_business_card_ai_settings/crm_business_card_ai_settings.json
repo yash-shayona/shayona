@@ -1,0 +1,112 @@
+{
+    "actions": [],
+    "allow_rename": 1,
+    "creation": "2026-05-13 00:00:00.000000",
+    "default_view": "List",
+    "doctype": "DocType",
+    "engine": "InnoDB",
+    "field_order": [
+        "section_main",
+        "enabled",
+        "column_break_main",
+        "openai_model",
+        "section_credentials",
+        "openai_api_key",
+        "section_twilio",
+        "twilio_whatsapp_template_sid",
+        "column_break_twilio",
+        "twilio_whatsapp_from_number",
+        "section_limits",
+        "request_timeout_sec"
+    ],
+    "fields": [
+        {
+            "fieldname": "section_main",
+            "fieldtype": "Section Break"
+        },
+        {
+            "default": "1",
+            "fieldname": "enabled",
+            "fieldtype": "Check",
+            "label": "Enabled"
+        },
+        {
+            "fieldname": "column_break_main",
+            "fieldtype": "Column Break"
+        },
+        {
+            "default": "gpt-5.4-mini",
+            "fieldname": "openai_model",
+            "fieldtype": "Data",
+            "label": "OpenAI Model",
+            "mandatory_depends_on": "eval: doc.enabled"
+        },
+        {
+            "fieldname": "section_credentials",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "openai_api_key",
+            "fieldtype": "Password",
+            "label": "OpenAI API Key",
+            "mandatory_depends_on": "eval: doc.enabled"
+        },
+        {
+            "fieldname": "section_limits",
+            "fieldtype": "Section Break"
+        },
+        {
+            "default": "90",
+            "fieldname": "request_timeout_sec",
+            "fieldtype": "Int",
+            "label": "Request Timeout (seconds)"
+        },
+        {
+            "fieldname": "section_twilio",
+            "fieldtype": "Section Break",
+            "label": "Twilio WhatsApp"
+        },
+        {
+            "fieldname": "twilio_whatsapp_template_sid",
+            "fieldtype": "Data",
+            "label": "Template SID",
+            "mandatory_depends_on": "eval: doc.enabled"
+        },
+        {
+            "fieldname": "column_break_twilio",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "twilio_whatsapp_from_number",
+            "fieldtype": "Data",
+            "label": "Registered WhatsApp Number",
+            "description": "Example: +919xxxxxxxxx",
+            "mandatory_depends_on": "eval: doc.enabled"
+        }
+    ],
+    "index_web_pages_for_search": 1,
+    "issingle": 1,
+    "links": [],
+    "modified": "2026-05-13 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Praveg",
+    "name": "CRM Business Card AI Settings",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "print": 1,
+            "read": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "track_changes": 1
+}

@@ -161,6 +161,9 @@ doc_events = {
     # "Notification Log": {
     #     "after_insert": "shayona.overrides.notifications.publish_alert_popup_event",
     # },
+    "CRM Lead": {
+        "after_insert": "shayona.services.lead_followup_service.send_application_lead_followup",
+    },
     "Task": {
         "validate": [
             "shayona.overrides.task.validate",
