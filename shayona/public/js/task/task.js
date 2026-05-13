@@ -98,6 +98,7 @@ function set_status_based_on_task_status(frm, cdt, cdn) {
             "status",
             "Completed"
         );
+        row.task_update_date = frappe.datetime.get_today();
     } else if (row.task_status === "RTS Info Needed") {
         frappe.model.set_value(
             frm.doctype,
@@ -146,6 +147,8 @@ function set_status_based_on_task_status(frm, cdt, cdn) {
             );
         }
     }
+
+    frm.refresh_field("custom_rbs_task_update");
 }
 
 function restrict_rbs_task_row_modification(frm) {
