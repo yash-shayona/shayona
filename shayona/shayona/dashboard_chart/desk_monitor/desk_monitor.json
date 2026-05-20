@@ -1,0 +1,48 @@
+{
+ "chart_name": "Desk Monitor",
+ "chart_type": "Report",
+ "creation": "2025-12-09 12:23:49.074057",
+ "currency": "",
+ "custom_options": "{\"type\": \"bar\", \"colors\": [\"#2ecc71\", \"#e74c3c\", \"#95a5a6\"], \"axisOptions\": { \"shortenYAxisNumbers\": 1 }, \"barOptions\": { \"stacked\": 1 }}",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "dynamic_filters_json": "{}",
+ "filters_json": "{\"date_range\":[\"2026-05-01\",\"2026-05-31\"]}",
+ "group_by_type": "Count",
+ "idx": 0,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2026-05-20 10:37:02.581385",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Desk Monitor",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "report_name": "Activity Tracker Custom Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "show_values_over_chart": 0,
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Bar",
+ "use_report_chart": 1,
+ "x_field": "interval",
+ "y_axis": [
+  {
+   "color": "#1F77B4",
+   "y_field": "mouse_count"
+  },
+  {
+   "color": "#FF7F0E",
+   "y_field": "keyboard_count"
+  },
+  {
+   "color": "#ff0000",
+   "y_field": "idle_time"
+  }
+ ]
+}

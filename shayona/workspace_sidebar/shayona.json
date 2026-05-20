@@ -20,6 +20,18 @@
   {
    "child": 0,
    "collapsible": 1,
+   "icon": "layout-dashboard",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Dashboard",
+   "link_to": "Desk Monitor",
+   "link_type": "Dashboard",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
    "icon": "shield-user",
    "indent": 0,
    "keep_closed": 0,
@@ -111,9 +123,21 @@
    "link_type": "Report",
    "show_arrow": 0,
    "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "chart-column-big",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Activity Tracker Custom Report",
+   "link_to": "Activity Tracker Custom Report",
+   "link_type": "Report",
+   "show_arrow": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-05-19 18:03:24.408560",
+ "modified": "2026-05-20 10:30:18.564764",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Shayona",
