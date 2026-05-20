@@ -1,0 +1,24 @@
+{
+ "cards": [],
+ "charts": [
+  {
+   "width": "Half"
+  },
+  {
+   "chart": "Desk Monitor",
+   "width": "Full"
+  }
+ ],
+ "creation": "2025-12-08 18:52:53.074680",
+ "dashboard_name": "Desk Monitor",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2025-12-10 17:41:40.528832",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Desk Monitor",
+ "owner": "Administrator"
+}
