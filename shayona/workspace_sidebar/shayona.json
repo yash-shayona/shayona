@@ -68,6 +68,18 @@
   {
    "child": 0,
    "collapsible": 1,
+   "icon": "timer",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Activity Tracker",
+   "link_to": "Activity Tracker",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 1,
    "icon": "file-text",
    "indent": 1,
    "keep_closed": 0,
@@ -101,8 +113,8 @@
    "type": "Link"
   }
  ],
- "modified": "2026-05-07 10:03:25.751318",
- "modified_by": "yashsolanki@shayonatechnology.com",
+ "modified": "2026-05-19 18:03:24.408560",
+ "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Shayona",
  "owner": "Administrator",

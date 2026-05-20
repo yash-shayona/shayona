@@ -1,9 +1,8 @@
 import frappe
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
-from shayona.mixins.task import TaskMixin
 
 
-class CustomTimesheet(Timesheet, TaskMixin):
+class CustomTimesheet(Timesheet):
     def update_task_and_project(self):
         tasks, projects = [], []
 
@@ -27,7 +26,7 @@ class CustomTimesheet(Timesheet, TaskMixin):
                 # -----------------------------------------
                 # CUSTOM LOGIC FOR REGENCY PROJECTS
                 # -----------------------------------------
-                if self.is_regency(task):
+                if task.is_regency():
                     pass
                 else:
                     # ERPNext default behavior

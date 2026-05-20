@@ -51,20 +51,6 @@ class TimesheetMixin:
             if from_time < allowed_start:
                 frappe.throw("You cannot start the timer before 8:30 AM.")
 
-            # Validate stop-time only when it is actually set.
-            if tl.to_time:
-                # Skip validation during auto submit
-                if self.custom_auto_submit == "Yes":
-                    continue
-
-                to_dt = get_datetime(tl.to_time)
-                if not to_dt:
-                    continue
-
-                to_time = to_dt.time()
-                if to_time > allowed_end:
-                    frappe.throw("You cannot stop the timer after 8:30 PM.")
-
     def calculate_total_break_hours(self):
         custom_total_break_hours = 0
         for time_log in self.time_logs:
@@ -128,7 +114,15 @@ def auto_submit_timesheet():
 
         for log in doc.time_logs:
             if log.from_time and not log.to_time:
-                log.to_time = get_datetime()
+                from_dt = get_datetime(log.from_time)
+
+                log.to_time = from_dt.replace(
+                    hour=19,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
+                )
+                
                 log.completed = 1
 
         doc.custom_auto_submit = "Yes"
