@@ -36,7 +36,7 @@ class TimesheetMixin:
             frappe.throw("Employee must be selected.")
 
     def allow_timer_start_end(self):
-        allowed_start = time(8, 30)
+        allowed_start = time(8, 15)
         allowed_end = time(20, 30)
 
         for tl in self.time_logs:
@@ -49,7 +49,11 @@ class TimesheetMixin:
 
             from_time = from_dt.time()
             if from_time < allowed_start:
-                frappe.throw("You cannot start the timer before 8:30 AM.")
+                frappe.throw(
+                    "You cannot start the timer before"
+                    + allowed_start.strftime("%I:%M %p")
+                    + "."
+                )
 
     def calculate_total_break_hours(self):
         custom_total_break_hours = 0
@@ -122,7 +126,7 @@ def auto_submit_timesheet():
                     second=0,
                     microsecond=0,
                 )
-                
+
                 log.completed = 1
 
         doc.custom_auto_submit = "Yes"

@@ -10,6 +10,18 @@ frappe.query_reports["Activity Tracker Custom Report"] = {
 			"options": "User",
 		},
 		{
+			"fieldname": "employee",
+			"label": "Employee",
+			"fieldtype": "Link",
+			"options": "Employee",
+		},
+		{
+			"fieldname": "timesheet",
+			"label": "Timesheet",
+			"fieldtype": "Link",
+			"options": "Timesheet",
+		},
+		{
 			"fieldname": "date_range",
 			"label": __("Date Range"),
 			"fieldtype": "DateRange",

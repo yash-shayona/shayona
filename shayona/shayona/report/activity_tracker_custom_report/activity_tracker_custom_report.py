@@ -35,16 +35,26 @@ def get_columns() -> list[dict]:
 			"options": "Activity Tracker",
 		},
 		{
-			"label": _("User"),
+			"label": _("User Email"),
 			"fieldname": "user",
 			"fieldtype": "Link",
 			"options": "User",
+		},
+		{
+			"label": _("User Name"),
+			"fieldname": "user_name",
+			"fieldtype": "Data",
 		},
 		{
 			"label": _("Employee"),
 			"fieldname": "employee",
 			"fieldtype": "Link",
 			"options": "Employee",
+		},
+		{
+			"label": _("Employee Name"),
+			"fieldname": "employee_name",
+			"fieldtype": "Data",
 		},
 		{
 			"label": _("Timesheet"),
@@ -58,9 +68,14 @@ def get_columns() -> list[dict]:
 			"fieldtype": "Date",
 		},
 		{
-			"label": _("Interval (15-min)"),
+			"label": _("Time Slot (15-min)"),
 			"fieldname": "interval",
-			"fieldtype": "DateTime",
+			"fieldtype": "Data",
+		},
+		{
+			"label": _("Status"),
+			"fieldname": "status",
+			"fieldtype": "Data",
 		},
 		{
 			"label": _("Mouse Count"),
@@ -73,7 +88,7 @@ def get_columns() -> list[dict]:
 			"fieldtype": "Int",
 		},
 		{
-			"label": _("Idle Time"),
+			"label": _("Idle Time (sec)"),
 			"fieldname": "idle_time",
 			"fieldtype": "float",
 		}
@@ -85,25 +100,48 @@ def get_data(filters) -> list[list]:
 
 	The report data is a list of rows, with each row being a list of cell values.
 	"""
-	# print(filters)
 	data = []
 	interval = 15  # minutes
  
+	# Optimized query with filters applied at DB level
 	activity_tracker = frappe.get_all(
      "Activity Tracker", 
-     filters={**filters.get("at_filters")}, 
-     fields=["*"],
-     order_by="name desc"
+     filters=filters.get("at_filters"), 
+     fields=["name", "user", "employee", "timesheet", "date"],
+     order_by="date desc, name desc"
      )
 	
+	# Cache for user and employee names
+	user_cache = {}
+	employee_cache = {}
+	
 	for at in activity_tracker:
+		# Resolve user name
+		if at.user not in user_cache:
+			try:
+				user_doc = frappe.get_value("User", at.user, "full_name")
+				user_cache[at.user] = user_doc or at.user
+			except:
+				user_cache[at.user] = at.user
+		
+		# Resolve employee name
+		employee_name = ""
+		if at.employee:
+			if at.employee not in employee_cache:
+				try:
+					emp_doc = frappe.get_value("Employee", at.employee, "employee_name")
+					employee_cache[at.employee] = emp_doc or at.employee
+				except:
+					employee_cache[at.employee] = at.employee
+			employee_name = employee_cache[at.employee]
+		
 		at_details = frappe.get_all("Activity Tracker Detail",
   			filters={"parent": at.name, **filters.get("at_detail_filters")},
-  	        fields=["*"],
+  	        fields=["timestamp", "mouse_count", "keyboard_count", "idle_time_sec"],
   	        order_by="timestamp desc"
   	    )
   
-		slot_data = {}   # { "09:15": {"mouse": 10, "keyboard": 20, "idle": 30} }
+		slot_data = {}   # { "09:15": {"mouse": 10, "keyboard": 20, "idle": 30, "status": "Active"} }
   
 		for atd in at_details:
 			ts = get_datetime(atd.timestamp)
@@ -119,13 +157,24 @@ def get_data(filters) -> list[list]:
 			slot_data[slot_key]["idle_time_sec"] += atd.idle_time_sec
    
 		for slot, values in sorted(slot_data.items()):
+			# Determine status: Priority to mouse/keyboard activity
+			if values["mouse_count"] > 0 or values["keyboard_count"] > 0:
+				status = "Active"  # Active if any keyboard/mouse activity
+			elif values["idle_time_sec"] > 0:
+				status = "Idle"  # Idle only if no activity but idle time recorded
+			else:
+				status = "No Data"  # No data at all
+			
 			data.append({
 				"name": at.name,
 				"user": at.user,
+				"user_name": user_cache[at.user],
 				"employee": at.employee,
+				"employee_name": employee_name,
 				"timesheet": at.timesheet,
 				"date": at.date,
 				"interval": slot,
+				"status": status,
 				"mouse_count": values["mouse_count"],
 				"keyboard_count": values["keyboard_count"],
 				"idle_time": values["idle_time_sec"],
@@ -147,20 +196,27 @@ def get_conditions(filters):
 	return conditions
 
 def auto_split_filters(filters):
+    if not filters:
+        filters = {}
+    
     at_fields = set(frappe.get_meta("Activity Tracker").get_valid_columns())
     at_detail_fields = set(frappe.get_meta("Activity Tracker Detail").get_valid_columns())
 
     at_filters = {}
     at_detail_filters = {}
     
+    # Handle date range filter
     if filters.get("date_range"):
         start_date, end_date = filters["date_range"]
-        filters["date"] = ["between", [start_date, end_date]]
-
+        at_filters["date"] = ["between", [start_date, end_date]]
+    
+    # Split filters between Activity Tracker and Activity Tracker Detail
     for key, value in filters.items():
-        if key in at_fields:
+        if key == "date_range":
+            continue  # Already handled above
+        if key in at_fields and value:
             at_filters[key] = value
-        elif key in at_detail_fields:
+        elif key in at_detail_fields and value:
             at_detail_filters[key] = value
             
     filters = {
@@ -171,10 +227,20 @@ def auto_split_filters(filters):
     return filters
 
 def get_chart_data(filters):
-    user = filters.get("at_filters").get("user")
-    date = filters.get("at_filters").get("date")
+    user = filters.get("at_filters", {}).get("user")
+    date = filters.get("at_filters", {}).get("date")
 
-    if not user or not date:
+    # Make chart work even without both filters
+    if not user:
+        return {}
+    
+    # If date is a list (between query format: ["between", [start_date, end_date]]), use the first date
+    if isinstance(date, list) and len(date) == 2 and isinstance(date[0], str) and date[0] == "between":
+        date = date[1][0]  # Extract start_date from ["between", [start_date, end_date]]
+    elif isinstance(date, list) and len(date) > 0:
+        date = date[0]
+    
+    if not date:
         return {}
 
     result = get_activity_chart(user, date)

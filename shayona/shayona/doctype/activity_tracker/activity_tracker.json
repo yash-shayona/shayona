@@ -6,7 +6,6 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_s878",
-  "amended_from",
   "user",
   "employee",
   "date",
@@ -23,16 +22,6 @@
   {
    "fieldname": "section_break_s878",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Activity Tracker",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
   },
   {
    "fieldname": "employee",
@@ -109,9 +98,8 @@
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "is_submittable": 1,
  "links": [],
- "modified": "2026-05-01 15:24:56.826149",
+ "modified": "2026-05-20 18:13:49.012502",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Activity Tracker",
@@ -128,7 +116,6 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "submit": 1,
    "write": 1
   }
  ],

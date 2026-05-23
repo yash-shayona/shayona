@@ -14,9 +14,9 @@ def delete_old_activity_trackers():
     Delete Activity Tracker records older than configured days
     """
 
-    # Read retention days from config (default 5)
+    # Read retention days from config (default 30 days)
     retention_days = frappe.get_site_config().get(
-        "activity_tracker_retention_days", 5
+        "activity_tracker_retention_days", 30
     )
 
     cutoff_date = add_days(nowdate(), -int(retention_days))

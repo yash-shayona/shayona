@@ -1,91 +1,83 @@
-import frappe
-import base64
 import json
-from shayona.services.tracker_processor import process_activity_upload
+
+import frappe
+
+from shayona.services.aes_decrypt import get_activity_tracker_key_b64
+from shayona.services.tracker_processor import enqueue_activity_upload
+
 
 @frappe.whitelist()
 def get_tracker_key():
-    key = frappe.get_site_config().get("activity_tracker_key_b64")
-    return {"key": key}
+    return {"key": get_activity_tracker_key_b64()}
+
 
 @frappe.whitelist()
 def receive_activity():
-    """Main endpoint to receive activity tracker upload."""
-    
     user_id = frappe.form_dict.get("user_id")
     if not user_id:
-        return {
-            "status": False, 
-            "message": "Missing user_id"
-        }
-    elif not frappe.db.exists("User", user_id):
-        return {
-            "status": False, 
-            "message": "Invalid user_id"
-        }
+        return {"status": False, "message": "Missing user_id"}
 
-    files = frappe.local.request.files
+    if not frappe.db.exists("User", user_id):
+        return {"status": False, "message": "Invalid user_id"}
 
-    # collect all event files
-    event_files = [
-        f for k, f in files.items()
-        if k.startswith("events_file_")
-    ]
-    
-    if not event_files:
-        return {
-            "status": False, 
-            "message": "Missing events_file"
-        }
+    request_files = frappe.local.request.files
+    event_files = sorted(
+        [(key, value) for key, value in request_files.items() if key.startswith("events_file_")],
+        key=lambda item: item[0],
+    )
+    screenshot_files = sorted(
+        [(key, value) for key, value in request_files.items() if key.startswith("screenshot_")],
+        key=lambda item: item[0],
+    )
 
-    screenshot = files.get("screenshot")  # optional
+    screenshots_meta_raw = frappe.form_dict.get("screenshots_meta") or "[]"
+    try:
+        screenshots_meta = json.loads(screenshots_meta_raw)
+        if not isinstance(screenshots_meta, list):
+            screenshots_meta = []
+    except ValueError:
+        screenshots_meta = []
 
-    last_tracker = None
+    if not event_files and not screenshot_files:
+        return {"status": False, "message": "Missing upload files"}
 
     try:
-        for f in event_files:
-            try:
-                payload = json.load(f)
-            except UnicodeDecodeError as e:
-                continue
-            except json.JSONDecodeError as e:
-                continue
-            
-            last_tracker = process_activity_upload(
-                user_id=user_id,
-                payload=payload,
-                screenshot_file=screenshot  # screenshot only once
-            )
-
+        upload_id = enqueue_activity_upload(
+            user_id=user_id,
+            event_files=event_files,
+            screenshot_files=screenshot_files,
+            screenshots_meta=screenshots_meta,
+        )
         return {
-            "status": True, 
-            "activity_tracker": last_tracker
+            "status": True,
+            "queued": True,
+            "upload_id": upload_id,
         }
-
-    except Exception as e:
+    except Exception as exc:
         frappe.log_error(frappe.get_traceback(), "ACTIVITY TRACKER ERROR")
         return {
             "status": False,
-            "message": str(e)
+            "message": str(exc),
         }
-        
+
+
 @frappe.whitelist()
 def report_error():
     payload = frappe.form_dict
-    
-    # extract payload
-    device_name = payload.get("device_name")
-    message = payload.get("message")
+    device_name = payload.get("device_name") or "Unknown device"
+    message = payload.get("message") or "Unknown tracker error"
     missing_fields = payload.get("missing_fields")
-    
+
     if missing_fields:
+        if isinstance(missing_fields, str):
+            missing_fields = [missing_fields]
         message += f"<br>Missing fields: {', '.join(missing_fields)}"
-    
+
     try:
         frappe.sendmail(
             recipients=["yashsolanki@shayonatechnology.com"],
             subject=f"Activity Tracker Error: {device_name}",
-            message=message
+            message=message,
         )
-    except Exception as e:
+    except Exception:
         frappe.log_error(frappe.get_traceback(), "ACTIVITY TRACKER ERROR")
