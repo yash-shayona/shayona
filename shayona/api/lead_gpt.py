@@ -77,7 +77,7 @@ def create_lead_from_business_card():
         )
 
         job = frappe.enqueue(
-            "praveg.api.lead_gpt.process_business_card_job",
+            "shayona.api.lead_gpt.process_business_card_job",
             queue=BUSINESS_CARD_JOB_QUEUE,
             timeout=BUSINESS_CARD_JOB_TIMEOUT,
             enqueue_after_commit=True,
