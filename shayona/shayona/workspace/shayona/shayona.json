@@ -9,7 +9,7 @@
  "for_user": "",
  "hide_custom": 0,
  "icon": "grid",
- "idx": 0,
+ "idx": 1,
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Shayona",
@@ -94,7 +94,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-05-12 15:09:27.283074",
+ "modified": "2026-06-30 14:46:21.413644",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Shayona",

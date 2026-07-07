@@ -1,7 +1,8 @@
 import frappe
-from frappe.utils import getdate, get_datetime
+from frappe.utils import getdate, get_datetime, get_time
 from datetime import time
 
+DEFAULT_ALLOWED_START_TIME = time(8, 15)  # 8:15 AM
 
 class TimesheetMixin:
     def set_timesheet_day(self):
@@ -35,9 +36,22 @@ class TimesheetMixin:
         if not self.employee:
             frappe.throw("Employee must be selected.")
 
-    def allow_timer_start_end(self):
-        allowed_start = time(8, 15)
+    def get_configured_start_end_time(self):
+        allowed_start = frappe.get_single_value(
+            "Shayona Settings", "allowed_timesheet_start_time"
+        )
+
+        if allowed_start:
+            allowed_start = get_time(allowed_start)
+        else:
+            allowed_start = DEFAULT_ALLOWED_START_TIME  # fallback
+
         allowed_end = time(20, 30)
+
+        return allowed_start, allowed_end
+
+    def allow_timer_start_end(self):
+        allowed_start, allowed_end = self.get_configured_start_end_time()
 
         for tl in self.time_logs:
             if not tl.from_time:
@@ -50,7 +64,7 @@ class TimesheetMixin:
             from_time = from_dt.time()
             if from_time < allowed_start:
                 frappe.throw(
-                    "You cannot start the timer before"
+                    "You cannot start the timer before "
                     + allowed_start.strftime("%I:%M %p")
                     + "."
                 )

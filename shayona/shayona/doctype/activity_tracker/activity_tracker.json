@@ -7,16 +7,19 @@
  "field_order": [
   "section_break_s878",
   "user",
-  "employee",
   "date",
   "column_break_oigc",
-  "timesheet",
   "total_idle_time_hrs",
   "total_idle_time_mins",
   "section_break_wtff",
   "activity_tracker_detail",
   "screenshot_gallery_section",
-  "screenshot_gallery"
+  "screenshot_gallery",
+  "employee_tab",
+  "employee",
+  "employee_name",
+  "column_break_zqmw",
+  "timesheet"
  ],
  "fields": [
   {
@@ -26,7 +29,6 @@
   {
    "fieldname": "employee",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Employee",
    "options": "Employee",
    "read_only": 1
@@ -46,7 +48,6 @@
   {
    "fieldname": "timesheet",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Timesheet",
    "options": "Timesheet",
    "read_only": 1
@@ -94,12 +95,28 @@
    "fieldname": "screenshot_gallery_section",
    "fieldtype": "Section Break",
    "label": "Screenshot Gallery"
+  },
+  {
+   "fieldname": "employee_tab",
+   "fieldtype": "Tab Break",
+   "label": "Employee"
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_zqmw",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-20 18:13:49.012502",
+ "modified": "2026-05-29 12:44:19.718899",
  "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Activity Tracker",
