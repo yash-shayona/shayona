@@ -147,10 +147,12 @@ after_uninstall = "shayona.setup.uninstall.after_uninstall"
 
 permission_query_conditions = {
     "Task": "shayona.permissions.task.get_permission_query_conditions",
+     "HD Ticket": "shayona.permissions.hd_ticket.get_permission_query_conditions",
 }
 #
 has_permission = {
     # "Task": "shayona.permissions.task.has_permission",
+    "HD Ticket": "shayona.permissions.hd_ticket.has_permission",
 }
 
 # Document Events
@@ -229,7 +231,13 @@ extend_doctype_class = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "shayona.event.get_events"
 # }
-#
+
+override_whitelisted_methods = {
+    "helpdesk.helpdesk.doctype.hd_ticket_template.api.get_one": "shayona.api.helpdesk_overrides.get_one",
+    "helpdesk.helpdesk.doctype.hd_ticket.api.new": "shayona.api.helpdesk_overrides.new_ticket",
+}
+
+
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
