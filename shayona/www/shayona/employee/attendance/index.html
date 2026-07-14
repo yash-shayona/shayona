@@ -1,0 +1,226 @@
+{% extends "templates/web.html" %}
+
+{% block title %}Employee Work Portal{% endblock %}
+
+{% block page_content %}
+<div class="sah-page">
+    <!-- Page Header -->
+    <div class="sah-header">
+        <div class="sah-header-content">
+            <span class="sah-header-label">
+                Employee Portal
+            </span>
+
+            <h1>Attendance History</h1>
+
+            <p>
+                View your day-wise attendance, working hours
+                and break time.
+            </p>
+        </div>
+
+        <a href="/shayona/employee" class="sah-dashboard-link">
+            <span aria-hidden="true">←</span>
+            Dashboard
+        </a>
+    </div>
+
+    <!-- Employee Information -->
+    <div class="sah-card sah-employee-card">
+        <div class="sah-employee-avatar">
+            <span id="employee-initial">E</span>
+        </div>
+
+        <div class="sah-employee-details">
+            <h2 id="employee-name">
+                Loading employee...
+            </h2>
+
+            <div class="sah-employee-meta">
+                <span id="employee-id">--</span>
+
+                <span class="sah-meta-divider"></span>
+
+                <span id="employee-department">--</span>
+
+                <span class="sah-meta-divider"></span>
+
+                <span id="employee-company">--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filters -->
+    <div class="sah-card sah-filter-card">
+        <div class="sah-filter-heading">
+            <div>
+                <h3>Date Filter</h3>
+
+                <!--<p>-->
+                <!--    Select any date range. Records are loaded-->
+                <!--    10 at a time.-->
+                <!--</p>-->
+            </div>
+
+            <button id="btn-current-month" type="button" class="sah-btn sah-btn-secondary">
+                Current Month
+            </button>
+        </div>
+
+        <div class="sah-filter-grid">
+            <div class="sah-field">
+                <label for="from-date">
+                    From Date
+                </label>
+
+                <input id="from-date" type="date">
+            </div>
+
+            <div class="sah-field">
+                <label for="to-date">
+                    To Date
+                </label>
+
+                <input id="to-date" type="date">
+            </div>
+
+            <div class="sah-filter-action">
+                <button id="btn-apply-filter" type="button" class="sah-btn sah-btn-primary">
+                    Apply Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="history-alert" class="sah-alert hidden"></div>
+
+    <!-- Summary Cards -->
+    <div class="sah-summary-grid">
+        <div class="sah-summary-card">
+            <div class="sah-summary-icon sah-icon-days">
+                <span>01</span>
+            </div>
+
+            <div>
+                <span class="sah-summary-label">
+                    Worked Days
+                </span>
+
+                <strong id="summary-active-days">
+                    0
+                </strong>
+
+                <small id="summary-range-days">
+                    Out of 0 days
+                </small>
+            </div>
+        </div>
+
+        <div class="sah-summary-card">
+            <div class="sah-summary-icon sah-icon-work">
+                <span>W</span>
+            </div>
+
+            <div>
+                <span class="sah-summary-label">
+                    Total Work Time
+                </span>
+
+                <strong id="summary-work-time">
+                    00:00
+                </strong>
+
+                <small>HH:MM</small>
+            </div>
+        </div>
+
+        <div class="sah-summary-card">
+            <div class="sah-summary-icon sah-icon-break">
+                <span>B</span>
+            </div>
+
+            <div>
+                <span class="sah-summary-label">
+                    Total Break Time
+                </span>
+
+                <strong id="summary-break-time">
+                    00:00
+                </strong>
+
+                <small>HH:MM</small>
+            </div>
+        </div>
+
+        <div class="sah-summary-card">
+            <div class="sah-summary-icon sah-icon-average">
+                <span>A</span>
+            </div>
+
+            <div>
+                <span class="sah-summary-label">
+                    Average Work
+                </span>
+
+                <strong id="summary-average-time">
+                    00:00
+                </strong>
+
+                <small>Per active day</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <div class="sah-card sah-table-card">
+        <div class="sah-table-header">
+            <div>
+                <h3>Day-wise Attendance</h3>
+
+                <p id="history-range-label">
+                    Loading attendance records...
+                </p>
+            </div>
+
+            <div id="record-count" class="sah-record-count">
+                0 Records
+            </div>
+        </div>
+
+        <div class="sah-table-wrapper">
+            <table class="sah-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Attendance</th>
+                        <th>Work Status</th>
+                        <th>Entry</th>
+                        <th>Exit</th>
+                        <th>Work Time</th>
+                        <th>Break Time</th>
+                        <th>Breaks</th>
+                        <th>Shift</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody id="attendance-table-body">
+                    <tr>
+                        <td colspan="10" class="sah-table-message">
+                            <div class="sah-loading">
+                                <span class="sah-spinner"></span>
+                                Loading attendance history...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="attendance-pagination" class="sah-pagination hidden">
+            <!-- JavaScript se pagination render hogi -->
+        </div>
+    </div>
+</div>
+{% endblock %}
