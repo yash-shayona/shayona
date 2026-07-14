@@ -1,0 +1,1654 @@
+/* =========================================================
+   Employee Work Portal - Complete Styles
+========================================================= */
+
+.swp-page {
+    --swp-primary: #1663ff;
+    --swp-primary-dark: #0f4fd1;
+    --swp-success: #159c53;
+    --swp-warning: #ee8b11;
+    --swp-danger: #de3d3d;
+
+    --swp-surface: #ffffff;
+    --swp-surface-soft: #f5f8ff;
+    --swp-border: #dbe4f0;
+
+    --swp-text: #11203a;
+    --swp-muted: #5f6f89;
+
+    --swp-shadow:
+        0 18px 40px rgba(17, 32, 58, 0.08);
+
+    width: 100%;
+    max-width: 1240px;
+
+    margin: 0 auto;
+    padding: 22px 22px 36px;
+}
+
+.swp-page,
+.swp-page * {
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   Page Background
+========================================================= */
+
+body {
+    background:
+        radial-gradient(circle at top left,
+            rgba(22, 99, 255, 0.12),
+            transparent 32%),
+        linear-gradient(180deg,
+            #f8fbff 0%,
+            #eff5ff 100%);
+
+    min-height: 100vh;
+}
+
+
+/* =========================================================
+   Header
+========================================================= */
+
+.swp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.swp-header-copy {
+    display: flex;
+    align-items: center;
+
+    min-height: 52px;
+}
+
+.swp-header h1 {
+    margin: 0;
+
+    color: var(--swp-text);
+
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    letter-spacing: -0.03em;
+}
+
+.swp-header p {
+    margin: 6px 0 0;
+
+    color: var(--swp-muted);
+
+    font-size: 16px;
+}
+
+.swp-date-time {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+.swp-date-chip {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 10px 14px;
+
+    color: var(--swp-text);
+
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(219, 228, 240, 0.94);
+    border-radius: 999px;
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+
+/* =========================================================
+   Common Card
+========================================================= */
+
+.swp-card {
+    position: relative;
+
+    padding: 20px;
+    margin-bottom: 18px;
+
+    background:
+        radial-gradient(circle at top right,
+            rgba(22, 99, 255, 0.08),
+            transparent 28%),
+        var(--swp-surface);
+
+    border: 1px solid var(--swp-border);
+    border-radius: 24px;
+
+    box-shadow: var(--swp-shadow);
+}
+
+.swp-card label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--swp-muted);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.swp-card h2 {
+    margin: 0;
+
+    color: var(--swp-text);
+
+    font-size: 28px;
+    line-height: 1.2;
+
+    letter-spacing: -0.04em;
+}
+
+.swp-card h3 {
+    margin: 0;
+
+    color: var(--swp-text);
+
+    font-size: 24px;
+    line-height: 1.25;
+}
+
+.swp-card h4 {
+    margin: 0;
+
+    color: var(--swp-text);
+
+    font-size: 18px;
+    line-height: 1.35;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   Status Card
+========================================================= */
+
+.swp-status-card {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.05fr) minmax(0, 1.55fr) minmax(0, 0.9fr);
+
+    align-items: stretch;
+
+    gap: 18px;
+}
+
+.swp-status-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    min-width: 0;
+    min-height: 100px;
+}
+
+.swp-status-panel-main {
+    gap: 14px;
+}
+
+.swp-status-topline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 12px;
+}
+
+.swp-status-topline label {
+    margin-bottom: 0;
+}
+
+.swp-entry-block {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.swp-entry-exit-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+.swp-entry-exit-grid .swp-entry-block {
+    min-width: 0;
+}
+
+.swp-entry-exit-grid .swp-entry-block+.swp-entry-block {
+    padding-left: 18px;
+
+    border-left:
+        1px solid rgba(202, 215, 230, 0.85);
+}
+
+@media (max-width: 640px) {
+    .swp-entry-exit-grid {
+        grid-template-columns: 1fr;
+
+        gap: 12px;
+    }
+
+    .swp-entry-exit-grid .swp-entry-block+.swp-entry-block {
+        padding-top: 12px;
+        padding-left: 0;
+
+        border-top:
+            1px solid rgba(202, 215, 230, 0.85);
+
+        border-left: 0;
+    }
+}
+
+.swp-entry-block h2 {
+    font-size: 32px;
+}
+
+.swp-entry-block h2 {
+    margin: 0;
+
+    font-size: clamp(20px, 1.7vw, 26px);
+    line-height: 1.15;
+
+    white-space: nowrap;
+
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.035em;
+}
+
+.swp-badge {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+
+    padding: 6px 12px;
+
+    color: var(--swp-primary-dark);
+
+    background: #edf4ff;
+    border-radius: 999px;
+
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   Work and Break Live Timers
+========================================================= */
+
+.swp-live-timers {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    align-self: stretch;
+
+    gap: 12px;
+}
+
+.swp-timer-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 0;
+    min-height: 180px;
+
+    padding: 16px 14px;
+
+    text-align: center;
+
+    border-radius: 20px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+
+/* Work Timer */
+
+.swp-work-timer-panel {
+    background:
+        linear-gradient(180deg,
+            rgba(21, 156, 83, 0.06),
+            rgba(21, 156, 83, 0.02));
+
+    border:
+        1px solid rgba(21, 156, 83, 0.2);
+}
+
+.swp-work-timer-panel.is-active {
+    border-color:
+        rgba(21, 156, 83, 0.42);
+
+    box-shadow:
+        0 12px 28px rgba(21, 156, 83, 0.11);
+}
+
+
+/* Break Timer */
+
+.swp-break-timer-panel {
+    background:
+        linear-gradient(180deg,
+            rgba(222, 61, 61, 0.06),
+            rgba(222, 61, 61, 0.02));
+
+    border:
+        1px solid rgba(222, 61, 61, 0.2);
+}
+
+.swp-break-timer-panel.is-active {
+    border-color:
+        rgba(222, 61, 61, 0.44);
+
+    box-shadow:
+        0 12px 28px rgba(222, 61, 61, 0.11);
+}
+
+
+/* Timer Heading */
+
+.swp-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.swp-panel-heading h3 {
+    font-size: 15px;
+}
+
+
+/* Timer Number */
+
+.swp-timer-panel h2 {
+    margin: 0;
+
+    font-size: 34px;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+
+    letter-spacing: -0.04em;
+}
+
+.swp-work-timer-panel h2 {
+    color: var(--swp-success);
+}
+
+.swp-break-timer-panel h2 {
+    color: var(--swp-danger);
+}
+
+
+/* Timer Description */
+
+.swp-timer-panel p {
+    min-height: 20px;
+
+    margin: 8px 0 0;
+
+    color: var(--swp-muted);
+
+    font-size: 13px;
+}
+
+
+/* HH MM SS */
+
+.swp-time-parts {
+    display: flex;
+
+    gap: 20px;
+    margin-top: 10px;
+
+    color: var(--swp-muted);
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.16em;
+}
+
+
+/* =========================================================
+   Timer Dot and Wave Animation
+========================================================= */
+
+.swp-panel-dot {
+    position: relative;
+
+    width: 10px;
+    height: 10px;
+
+    flex: 0 0 auto;
+
+    color: #94a3b8;
+    background: currentColor;
+
+    border-radius: 50%;
+
+    opacity: 0.38;
+
+    transition:
+        opacity 0.2s ease,
+        color 0.2s ease;
+}
+
+.swp-dot-work {
+    color: var(--swp-success);
+}
+
+.swp-dot-break {
+    color: var(--swp-danger);
+}
+
+.swp-panel-dot::after {
+    content: "";
+
+    position: absolute;
+    inset: -7px;
+
+    border: 2px solid currentColor;
+    border-radius: 50%;
+
+    opacity: 0;
+
+    transform: scale(0.35);
+}
+
+.swp-panel-dot.is-active {
+    opacity: 1;
+
+    animation:
+        swp-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.swp-panel-dot.is-active::after {
+    animation:
+        swp-dot-wave 1.4s ease-out infinite;
+}
+
+@keyframes swp-dot-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.18);
+    }
+}
+
+@keyframes swp-dot-wave {
+    0% {
+        opacity: 0.75;
+        transform: scale(0.35);
+    }
+
+    75%,
+    100% {
+        opacity: 0;
+        transform: scale(1.25);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .swp-panel-dot.is-active,
+    .swp-panel-dot.is-active::after {
+        animation: none;
+    }
+}
+
+
+/* =========================================================
+   Timer Responsive
+========================================================= */
+
+@media (max-width: 700px) {
+    .swp-live-timers {
+        grid-template-columns: 1fr;
+    }
+
+    .swp-timer-panel {
+        min-height: 160px;
+    }
+}
+
+@media (max-width: 480px) {
+    .swp-timer-panel h2 {
+        font-size: 32px;
+    }
+}
+
+
+/* =========================================================
+   Today's Total
+========================================================= */
+
+.swp-total-panel {
+    justify-content: flex-start;
+}
+
+.swp-total-panel .swp-panel-heading {
+    justify-content: flex-start;
+
+    margin-bottom: 16px;
+}
+
+.swp-total-split {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr) auto minmax(0, 1fr);
+
+    align-items: center;
+
+    gap: 12px;
+    height: 100%;
+}
+
+.swp-total-item {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+
+    gap: 6px;
+}
+
+.swp-total-item strong {
+    color: var(--swp-text);
+
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+
+    letter-spacing: -0.03em;
+}
+
+.swp-total-item span {
+    color: var(--swp-muted);
+
+    font-size: 13px;
+}
+
+.swp-total-divider {
+    width: 1px;
+    height: 74px;
+
+    background: rgba(202, 215, 230, 0.9);
+}
+
+
+/* =========================================================
+   Main Two-column Layout
+========================================================= */
+
+.swp-dual-grid,
+.swp-log-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    align-items: stretch;
+
+    column-gap: 18px;
+    row-gap: 18px;
+}
+
+/* Current Task / Task Control aur logs ke beech fixed space */
+.swp-dual-grid {
+    margin-bottom: 18px;
+}
+
+/* Grid child cards apna extra bottom margin na rakhein */
+.swp-dual-grid>.swp-card,
+.swp-log-grid>.swp-card {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.swp-dual-grid>.swp-card,
+.swp-log-grid>.swp-card {
+    width: 100%;
+    min-width: 0;
+}
+
+.swp-current-task-card,
+.swp-control-card {
+    display: flex;
+    flex-direction: column;
+
+    min-height: 330px;
+    height: auto;
+}
+
+
+/* =========================================================
+   Section Heading
+========================================================= */
+
+.swp-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.swp-section-head p,
+.swp-description-panel p,
+.swp-log-meta,
+.swp-empty-state,
+.swp-setup-card p {
+    margin: 6px 0 0;
+
+    color: var(--swp-muted);
+}
+
+
+/* =========================================================
+   Current Task
+========================================================= */
+
+.swp-task-state {
+    display: inline-flex;
+    align-items: center;
+
+    flex: 0 0 auto;
+
+    padding: 8px 14px;
+
+    color: var(--swp-text);
+
+    background: rgba(17, 32, 58, 0.06);
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.swp-current-task-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 16px 18px;
+}
+
+.swp-current-task-grid>div {
+    min-width: 0;
+}
+
+.swp-description-panel {
+    margin-top: 16px;
+    padding-top: 14px;
+
+    border-top:
+        1px solid rgba(202, 215, 230, 0.7);
+}
+
+.swp-description-panel p {
+    min-height: 22px;
+
+    overflow-wrap: anywhere;
+}
+
+
+
+/* =========================================================
+   Task Control Form
+========================================================= */
+
+.swp-control-card {
+    position: relative;
+
+    overflow: hidden;
+}
+
+.swp-control-content {
+    display: flex;
+    flex-direction: column;
+
+    height: 100%;
+
+    transition:
+        filter 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.swp-form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
+}
+
+.swp-form-grid>div {
+    min-width: 0;
+}
+
+.swp-form-grid select,
+.swp-form-grid input,
+.swp-modal-field select,
+.swp-modal-field input {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+
+    padding: 12px 14px;
+
+    color: var(--swp-text);
+
+    background: #ffffff;
+    border: 1px solid #cad7e6;
+    border-radius: 14px;
+
+    font: inherit;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.swp-form-grid select:focus,
+.swp-form-grid input:focus,
+.swp-modal-field select:focus,
+.swp-modal-field input:focus {
+    outline: none;
+
+    border-color: rgba(22, 99, 255, 0.7);
+
+    box-shadow:
+        0 0 0 4px rgba(22, 99, 255, 0.1);
+}
+
+.swp-form-grid select:disabled,
+.swp-form-grid input:disabled {
+    cursor: not-allowed;
+
+    color: var(--swp-muted);
+
+    background: #f4f6fa;
+}
+
+
+/* =========================================================
+   Task Control Locked State
+========================================================= */
+
+.swp-control-card.is-locked .swp-control-content {
+    pointer-events: none;
+    user-select: none;
+
+    opacity: 0.38;
+
+    filter: blur(3px);
+
+    transform: scale(0.995);
+}
+
+.swp-control-lock {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(245, 248, 255, 0.5);
+
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.swp-control-lock-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: min(100%, 340px);
+
+    gap: 8px;
+    padding: 20px 24px;
+
+    color: var(--swp-text);
+    text-align: center;
+
+    background: rgba(255, 255, 255, 0.96);
+
+    border:
+        1px solid rgba(22, 99, 255, 0.2);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 45px rgba(17, 32, 58, 0.16);
+}
+
+.swp-control-lock-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+
+    color: var(--swp-primary);
+
+    background: rgba(22, 99, 255, 0.1);
+    border-radius: 50%;
+}
+
+.swp-control-lock-icon svg {
+    display: block;
+}
+
+.swp-control-lock-box strong {
+    color: var(--swp-text);
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.swp-control-lock-box>span:last-child {
+    max-width: 280px;
+
+    color: var(--swp-muted);
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   Buttons and Actions
+========================================================= */
+
+.swp-actions {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.swp-action-row {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 10px 12px;
+    margin-top: 0;
+}
+
+.swp-action-row.has-single {
+    grid-template-columns: 1fr;
+}
+
+.swp-actions-fill {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.swp-actions-fill .swp-btn {
+    min-width: 0;
+}
+
+.swp-btn {
+    width: 100%;
+
+    padding: 12px 16px;
+
+    border: 0;
+    border-radius: 14px;
+
+    font: inherit;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        opacity 0.18s ease,
+        background-color 0.18s ease;
+}
+
+.swp-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.swp-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.swp-btn:focus-visible {
+    outline: 3px solid rgba(22, 99, 255, 0.2);
+    outline-offset: 2px;
+}
+
+.swp-btn:disabled {
+    cursor: wait;
+    pointer-events: none;
+    opacity: 0.65;
+    box-shadow: none;
+    transform: none;
+}
+
+.swp-btn-primary {
+    color: #ffffff;
+
+    background: var(--swp-primary);
+
+    box-shadow:
+        0 14px 28px rgba(22, 99, 255, 0.22);
+}
+
+.swp-btn-primary:hover:not(:disabled) {
+    background: var(--swp-primary-dark);
+}
+
+.swp-btn-outline-primary,
+.swp-btn-outline-warning,
+.swp-btn-outline-danger {
+    background: #ffffff;
+
+    box-shadow: none;
+}
+
+.swp-btn-outline-primary {
+    color: var(--swp-primary);
+
+    border:
+        1px solid rgba(22, 99, 255, 0.28);
+}
+
+.swp-btn-outline-warning {
+    color: var(--swp-warning);
+
+    border:
+        1px solid rgba(238, 139, 17, 0.34);
+}
+
+.swp-btn-outline-danger {
+    color: var(--swp-danger);
+
+    border:
+        1px solid rgba(222, 61, 61, 0.32);
+}
+
+/* =========================================================
+   Filled Action Buttons
+========================================================= */
+
+.swp-btn-outline-primary,
+.swp-btn-outline-warning,
+.swp-btn-outline-danger {
+    color: #ffffff;
+    border: 1px solid transparent;
+
+    box-shadow:
+        0 10px 22px rgba(17, 32, 58, 0.12);
+}
+
+
+/* Entry / Primary */
+
+.swp-btn-outline-primary {
+    background: var(--swp-primary);
+    border-color: var(--swp-primary);
+}
+
+.swp-btn-outline-primary:hover:not(:disabled) {
+    background: var(--swp-primary-dark);
+    border-color: var(--swp-primary-dark);
+}
+
+
+/* Break */
+
+.swp-btn-outline-warning {
+    background: var(--swp-warning);
+    border-color: var(--swp-warning);
+}
+
+.swp-btn-outline-warning:hover:not(:disabled) {
+    background: #d97908;
+    border-color: #d97908;
+}
+
+
+/* Exit */
+
+.swp-btn-outline-danger {
+    background: var(--swp-danger);
+    border-color: var(--swp-danger);
+}
+
+.swp-btn-outline-danger:hover:not(:disabled) {
+    background: #c92f2f;
+    border-color: #c92f2f;
+}
+
+
+/* =========================================================
+   Work and Break Logs
+========================================================= */
+
+.swp-log-list {
+    display: grid;
+
+    gap: 12px;
+}
+
+.swp-log-item {
+    padding: 12px 14px;
+
+    background: var(--swp-surface-soft);
+
+    border:
+        1px solid rgba(202, 215, 230, 0.85);
+
+    border-radius: 18px;
+}
+
+.swp-log-item h4 {
+    font-size: 18px;
+}
+
+.swp-log-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+}
+
+.swp-log-duration {
+    flex: 0 0 auto;
+
+    color: var(--swp-primary-dark);
+
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.swp-log-meta {
+    display: grid;
+
+    gap: 6px;
+
+    font-size: 13px;
+}
+
+.swp-log-meta span {
+    overflow-wrap: anywhere;
+}
+
+.swp-empty-state {
+    padding: 16px 18px;
+
+    text-align: center;
+
+    border:
+        1px dashed rgba(95, 111, 137, 0.28);
+
+    border-radius: 18px;
+}
+
+.swp-log-grid .swp-card {
+    align-self: start;
+    min-height: 0;
+    margin-bottom: 0;
+}
+
+
+/* =========================================================
+   Alert and Setup
+========================================================= */
+
+.swp-alert {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+
+    border-radius: 16px;
+
+    font-weight: 600;
+}
+
+.swp-alert-info {
+    color: var(--swp-primary-dark);
+
+    background: #edf4ff;
+}
+
+.swp-alert-error {
+    color: #b52525;
+
+    background: #fff1f1;
+}
+
+.swp-setup-card {
+    background:
+        linear-gradient(180deg,
+            rgba(238, 139, 17, 0.12),
+            rgba(255, 255, 255, 0.96));
+}
+
+
+/* =========================================================
+   Create Task Modal
+========================================================= */
+
+.swp-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.swp-modal-backdrop {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(12, 19, 35, 0.46);
+
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.swp-modal-dialog {
+    position: relative;
+
+    width: min(100%, 460px);
+    max-height: calc(100vh - 40px);
+
+    overflow-y: auto;
+
+    padding: 22px;
+
+    background:
+        radial-gradient(circle at top right,
+            rgba(22, 99, 255, 0.08),
+            transparent 30%),
+        #ffffff;
+
+    border:
+        1px solid rgba(202, 215, 230, 0.9);
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 28px 60px rgba(17, 32, 58, 0.22);
+}
+
+.swp-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.swp-modal-head h3 {
+    margin: 0;
+
+    font-size: 22px;
+}
+
+.swp-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+
+    flex: 0 0 auto;
+
+    padding: 0;
+
+    color: var(--swp-text);
+
+    background: rgba(17, 32, 58, 0.06);
+
+    border: 0;
+    border-radius: 999px;
+
+    font-size: 22px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.swp-modal-close:hover {
+    background: rgba(17, 32, 58, 0.11);
+}
+
+.swp-modal-body {
+    display: grid;
+
+    gap: 16px;
+}
+
+.swp-modal-field label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--swp-muted);
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.swp-modal-actions {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* =========================================================
+   Current Task Header Actions
+========================================================= */
+
+.swp-current-task-head {
+    align-items: center;
+}
+
+.swp-current-task-head-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+.swp-btn-switch-task {
+    width: auto;
+    min-width: 178px;
+
+    padding: 10px 16px;
+
+    border-radius: 12px;
+
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.swp-current-task-card .swp-description-panel {
+    margin-bottom: 0;
+}
+
+
+/* =========================================================
+   Utilities
+========================================================= */
+
+.swp-page .hidden,
+.hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   Responsive - Tablet
+========================================================= */
+
+@media (max-width: 1100px) {
+    .swp-status-card {
+        grid-template-columns: 1fr;
+    }
+
+    .swp-status-panel-main {
+        min-height: auto;
+    }
+
+    .swp-dual-grid,
+    .swp-log-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .swp-current-task-card,
+    .swp-control-card {
+        min-height: auto;
+    }
+}
+
+
+/* =========================================================
+   Responsive - Small Tablet
+========================================================= */
+
+@media (max-width: 900px) {
+    .swp-header {
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 12px;
+    }
+
+    .swp-header h1 {
+        font-size: 22px;
+    }
+
+    .swp-date-time {
+        width: 100%;
+
+        justify-content: flex-start;
+    }
+
+    .swp-form-grid,
+    .swp-actions-fill,
+    .swp-current-task-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .swp-total-split {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .swp-total-divider {
+        display: none;
+    }
+
+    .swp-timer-panel h2 {
+        font-size: 36px;
+    }
+}
+
+
+/* =========================================================
+   Responsive - Mobile
+========================================================= */
+
+@media (max-width: 640px) {
+    .swp-page {
+        padding: 24px 14px 40px;
+    }
+
+    .swp-card {
+        padding: 18px;
+
+        border-radius: 20px;
+    }
+
+    .swp-header-copy {
+        min-height: auto;
+    }
+
+    .swp-date-time {
+        display: grid;
+
+        grid-template-columns: 1fr;
+
+        gap: 8px;
+    }
+
+    .swp-date-chip {
+        justify-content: center;
+
+        width: 100%;
+    }
+
+    .swp-entry-block h2 {
+        font-size: 28px;
+    }
+
+    .swp-entry-block h2 {
+        font-size: 22px;
+    }
+
+    .swp-timer-panel h2 {
+        font-size: 34px;
+    }
+
+    .swp-total-split {
+        grid-template-columns: 1fr;
+
+        gap: 18px;
+    }
+
+    .swp-action-row {
+        grid-template-columns: 1fr;
+    }
+
+    .swp-actions {
+        flex-direction: column;
+    }
+
+    .swp-btn {
+        width: 100%;
+    }
+
+    .swp-current-task-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .swp-control-card {
+        min-height: 390px;
+    }
+
+    .swp-control-lock {
+        padding: 18px;
+    }
+
+    .swp-control-lock-box {
+        padding: 18px;
+
+        border-radius: 16px;
+    }
+
+    .swp-log-top {
+        align-items: flex-start;
+    }
+
+    .swp-modal {
+        padding: 14px;
+    }
+
+    .swp-modal-dialog {
+        max-height: calc(100vh - 28px);
+
+        padding: 18px;
+
+        border-radius: 20px;
+    }
+
+    .swp-modal-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .swp-current-task-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .swp-current-task-head-actions {
+        width: 100%;
+
+        justify-content: space-between;
+    }
+
+    .swp-btn-switch-task {
+        flex: 1 1 auto;
+
+        min-width: 0;
+        width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .swp-current-task-head-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .swp-task-state {
+        width: fit-content;
+    }
+
+    .swp-btn-switch-task {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   Header and Button Icons
+========================================================= */
+
+.swp-date-chip {
+    gap: 8px;
+}
+
+.swp-chip-icon {
+    display: block;
+
+    width: 18px;
+    height: 18px;
+
+    flex: 0 0 18px;
+
+    object-fit: contain;
+}
+
+.swp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+}
+
+.swp-btn-icon {
+    display: inline-block;
+
+    width: 20px;
+    height: 20px;
+
+    flex: 0 0 20px;
+
+    background-color: currentColor;
+
+    -webkit-mask-image: var(--swp-icon);
+    mask-image: var(--swp-icon);
+
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+
+    -webkit-mask-position: center;
+    mask-position: center;
+
+    -webkit-mask-size: contain;
+    mask-size: contain;
+
+    pointer-events: none;
+}
+
+.swp-icon-entry {
+    --swp-icon:
+        url("/files/login.png");
+}
+
+.swp-icon-break {
+    --swp-icon:
+        url("/files/coffee.png");
+}
+
+.swp-icon-exit {
+    --swp-icon:
+        url("/files/logout.png");
+}
+
+.swp-btn>span {
+    line-height: 1.2;
+}
+
+
+/* Mobile icon sizing */
+
+@media (max-width: 640px) {
+    .swp-chip-icon {
+        width: 17px;
+        height: 17px;
+
+        flex-basis: 17px;
+    }
+
+    .swp-btn-icon {
+        width: 19px;
+        height: 19px;
+
+        flex-basis: 19px;
+    }
+}

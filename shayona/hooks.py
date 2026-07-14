@@ -180,6 +180,12 @@ doc_events = {
     "Holiday List": {
         "before_save": "shayona.overrides.holiday_list.before_save",
     },
+    "Attendance": {
+        "before_submit": "shayona.overrides.attendance.before_submit",
+    },
+    "Salary Slip": {
+        "before_validate": "shayona.overrides.salary_slip.before_validate",
+    },
 }
 
 # Scheduled Tasks
@@ -221,6 +227,8 @@ scheduler_events = {
 extend_doctype_class = {
     "Task": "shayona.mixins.task.TaskMixin",
     "Timesheet": "shayona.mixins.timesheet.TimesheetMixin",
+    "Attendance": "shayona.mixins.attendance.AttendanceMixin",
+    "Salary Slip": "shayona.mixins.salary_slip.SalarySlipMixin",
 }
 
 # Overriding Methods

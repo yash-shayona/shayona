@@ -1,0 +1,410 @@
+{% extends "templates/web.html" %}
+
+{% block title %}Employee Work Portal{% endblock %}
+
+{% block page_content %}
+<div class="swp-page">
+    <div class="swp-header">
+        <div class="swp-header-copy">
+            <h1 id="greeting-title">Good Morning</h1>
+        </div>
+
+        <div class="swp-date-time">
+            <span class="swp-date-chip">
+                <img src="/files/calendar.png" alt="" class="swp-chip-icon" aria-hidden="true">
+
+                <span id="today-date">--</span>
+            </span>
+
+            <span class="swp-date-chip">
+                <img src="/files/clock.png" alt="" class="swp-chip-icon" aria-hidden="true">
+
+                <span id="current-time">--</span>
+            </span>
+        </div>
+    </div>
+
+    <div id="setup-card" class="swp-card swp-setup-card hidden">
+        <h3>Portal Setup Required</h3>
+        <p id="setup-message">
+            Please complete the required setup before using this portal.
+        </p>
+    </div>
+
+    <div id="portal-alert" class="swp-alert hidden"></div>
+
+    <!-- Attendance Summary -->
+    <div class="swp-card swp-status-card">
+        <div class="swp-status-panel swp-status-panel-main">
+            <div class="swp-status-topline">
+                <label>Work Status</label>
+                <div id="work-status" class="swp-badge">
+                    Not Started
+                </div>
+            </div>
+
+            <div class="swp-entry-exit-grid">
+                <div class="swp-entry-block">
+                    <label>Entry At</label>
+                    <h2 id="entry-time">--:--</h2>
+                </div>
+
+                <div class="swp-entry-block">
+                    <label>Exit At</label>
+                    <h2 id="exit-time">--:--</h2>
+                </div>
+            </div>
+
+            <div id="status-action-row" class="swp-actions swp-action-row">
+                <button id="btn-entry" type="button" class="swp-btn swp-btn-outline-primary">
+                    <span class="swp-btn-icon swp-icon-entry" aria-hidden="true"></span>
+
+                    <span>Entry</span>
+                </button>
+
+                <button id="btn-break-start" type="button" class="swp-btn swp-btn-outline-warning hidden">
+                    <span class="swp-btn-icon swp-icon-break" aria-hidden="true"></span>
+
+                    <span>Break Start</span>
+                </button>
+
+                <button id="btn-break-end" type="button" class="swp-btn swp-btn-outline-warning hidden">
+                    <span class="swp-btn-icon swp-icon-break" aria-hidden="true"></span>
+
+                    <span>Break End</span>
+                </button>
+
+                <button id="btn-exit" type="button" class="swp-btn swp-btn-outline-danger hidden">
+                    <span class="swp-btn-icon swp-icon-exit" aria-hidden="true"></span>
+
+                    <span>Exit</span>
+                </button>
+            </div>
+        </div>
+
+        <!--<div class="swp-status-panel swp-timer-panel">-->
+        <!--    <div class="swp-panel-heading">-->
+        <!--        <h3>Current Working Time</h3>-->
+        <!--        <span class="swp-panel-dot"></span>-->
+        <!--    </div>-->
+
+        <!--    <h2 id="current-working-time">00:00:00</h2>-->
+        <!--    <p id="current-working-label">-->
+        <!--        No active session-->
+        <!--    </p>-->
+
+        <!--    <div class="swp-time-parts">-->
+        <!--        <span>HH</span>-->
+        <!--        <span>MM</span>-->
+        <!--        <span>SS</span>-->
+        <!--    </div>-->
+        <!--</div>-->
+
+        <div class="swp-status-panel swp-live-timers">
+            <!-- Work Timer -->
+            <div id="work-timer-panel" class="swp-timer-panel swp-work-timer-panel">
+                <div class="swp-panel-heading">
+                    <h3>Working Time</h3>
+
+                    <span id="work-timer-dot" class="swp-panel-dot swp-dot-work"></span>
+                </div>
+
+                <h2 id="current-working-time">00:00:00</h2>
+
+                <p id="current-working-label">
+                    No active session
+                </p>
+
+                <div class="swp-time-parts">
+                    <span>HH</span>
+                    <span>MM</span>
+                    <span>SS</span>
+                </div>
+            </div>
+
+            <!-- Break Timer -->
+            <div id="break-timer-panel" class="swp-timer-panel swp-break-timer-panel">
+                <div class="swp-panel-heading">
+                    <h3>Break Time</h3>
+
+                    <span id="break-timer-dot" class="swp-panel-dot swp-dot-break"></span>
+                </div>
+
+                <h2 id="current-break-time">00:00:00</h2>
+
+                <p id="current-break-label">
+                    No break taken
+                </p>
+
+                <div class="swp-time-parts">
+                    <span>HH</span>
+                    <span>MM</span>
+                    <span>SS</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="swp-status-panel swp-total-panel">
+            <div class="swp-panel-heading">
+                <h3>Today's Total</h3>
+            </div>
+
+            <div class="swp-total-split">
+                <div class="swp-total-item">
+                    <strong id="total-work-time">00:00</strong>
+                    <span>Work Time</span>
+                </div>
+
+                <div class="swp-total-divider"></div>
+
+                <div class="swp-total-item">
+                    <strong id="total-break-time">00:00</strong>
+                    <span>Break Time</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Task + Task Control -->
+    <div class="swp-dual-grid">
+        <!-- Current Task -->
+        <div class="swp-card swp-current-task-card">
+            <div class="swp-section-head swp-current-task-head">
+                <div>
+                    <h3>Current Task</h3>
+                </div>
+
+                <div class="swp-current-task-head-actions">
+                    <button id="btn-switch-task" type="button"
+                        class="swp-btn swp-btn-primary swp-btn-switch-task hidden">
+                        Stop / Switch Task
+                    </button>
+
+                    <div id="current-task-state" class="swp-task-state">
+                        Not Started
+                    </div>
+                </div>
+            </div>
+
+            <div class="swp-current-task-grid">
+                <div>
+                    <label>Project</label>
+                    <h4 id="current-project">
+                        Not Selected
+                    </h4>
+                </div>
+
+                <div>
+                    <label>Task</label>
+                    <h4 id="current-task">
+                        Not Selected
+                    </h4>
+                </div>
+
+                <div>
+                    <label>Activity Type</label>
+                    <h4 id="current-activity-type">
+                        Not Selected
+                    </h4>
+                </div>
+
+                <div>
+                    <label>Started At</label>
+                    <h4 id="current-task-started-at">
+                        --:--
+                    </h4>
+                </div>
+            </div>
+
+            <div class="swp-description-panel">
+                <label>Description</label>
+                <p id="current-description">
+                    No active task description yet.
+                </p>
+            </div>
+        </div>
+
+        <!-- Task Control -->
+        <div id="task-control-card" class="swp-card swp-control-card">
+            <!-- Lock overlay -->
+            <div id="task-control-lock" class="swp-control-lock hidden" aria-hidden="true">
+                <div class="swp-control-lock-box">
+                    <span class="swp-control-lock-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+
+                            <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                        </svg>
+                    </span>
+
+                    <strong id="task-control-lock-title">
+                        Work in Progress
+                    </strong>
+
+                    <span id="task-control-lock-message">
+                        Stop the current task before selecting another task.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Content that gets blurred -->
+            <div class="swp-control-content">
+                <div class="swp-section-head">
+                    <div>
+                        <h3>Task Control</h3>
+                    </div>
+                </div>
+
+                <div class="swp-form-grid">
+                    <div>
+                        <label for="project">
+                            Project (Optional)
+                        </label>
+
+                        <select id="project">
+                            <option value="">
+                                Select Project
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="task">
+                            Task (Optional)
+                        </label>
+
+                        <select id="task">
+                            <option value="">
+                                Select Task
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="activity-type">
+                            Activity Type
+                        </label>
+
+                        <select id="activity-type">
+                            <option value="">
+                                Select Activity
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="work-description">
+                            Description
+                        </label>
+
+                        <input id="work-description" type="text" placeholder="What are you working on?">
+                    </div>
+                </div>
+
+                <div class="swp-actions swp-actions-fill">
+                    <button id="btn-create-task" type="button" class="swp-btn swp-btn-outline-primary hidden">
+                        Create Task
+                    </button>
+
+                    <button id="btn-start-task" type="button" class="swp-btn swp-btn-primary hidden">
+                        Start Work
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="swp-log-grid">
+        <div class="swp-card">
+            <div class="swp-section-head">
+                <div>
+                    <h3>Today's Work Sessions</h3>
+                </div>
+            </div>
+
+            <div id="work-session-list" class="swp-log-list">
+                <div class="swp-empty-state">
+                    No work session started yet.
+                </div>
+            </div>
+        </div>
+
+        <div class="swp-card">
+            <div class="swp-section-head">
+                <div>
+                    <h3>Today's Breaks</h3>
+                </div>
+            </div>
+
+            <div id="break-log-list" class="swp-log-list">
+                <div class="swp-empty-state">
+                    No break taken yet.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div id="create-task-modal" class="swp-modal hidden" aria-hidden="true">
+        <div class="swp-modal-backdrop" data-modal-close="true"></div>
+
+        <div class="swp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="create-task-modal-title">
+            <div class="swp-modal-head">
+                <h3 id="create-task-modal-title">
+                    Create Task
+                </h3>
+
+                <button id="btn-close-create-task-modal" type="button" class="swp-modal-close" aria-label="Close">
+                    ×
+                </button>
+            </div>
+
+            <div class="swp-modal-body">
+                <div class="swp-modal-field">
+                    <label for="create-task-title">
+                        Task Title
+                    </label>
+
+                    <input id="create-task-title" type="text" placeholder="Enter task title">
+                </div>
+
+                <div class="swp-modal-field">
+                    <label for="create-task-project">
+                        Project (Optional)
+                    </label>
+
+                    <select id="create-task-project">
+                        <option value="">
+                            Select Project
+                        </option>
+                    </select>
+                </div>
+
+                <div class="swp-modal-field">
+                    <label for="create-task-type">
+                        Task Type (Optional)
+                    </label>
+
+                    <select id="create-task-type">
+                        <option value="">
+                            Select Task Type
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="swp-modal-actions">
+                <button id="btn-cancel-create-task" type="button" class="swp-btn swp-btn-outline-primary">
+                    Cancel
+                </button>
+
+                <button id="btn-submit-create-task" type="button" class="swp-btn swp-btn-primary">
+                    Create Task
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
