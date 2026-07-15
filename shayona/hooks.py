@@ -210,7 +210,7 @@ scheduler_events = {
     # 		"shayona.tasks.monthly"
     # 	],
     "cron": {
-        "00 22 * * *": ["shayona.mixins.timesheet.auto_submit_timesheet"],
+        # "00 22 * * *": ["shayona.mixins.timesheet.auto_submit_timesheet"],
         "59 23 * * *": [
             "shayona.shayona.doctype.activity_tracker.activity_tracker.delete_old_activity_trackers"
         ],

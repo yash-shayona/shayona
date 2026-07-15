@@ -1,8 +1,9 @@
 import frappe
 from frappe import _
-from frappe.utils import flt, get_datetime, getdate, now_datetime
+from frappe.utils import flt, get_datetime, getdate, now_datetime, get_fullname
 
 
+@frappe.whitelist()
 def employee_portal_get_boot_data():
     # API Method:
     # employee_portal_get_boot_data
@@ -40,7 +41,7 @@ def employee_portal_get_boot_data():
         "user": {
             "email": user,
             "employee": "",
-            "employee_name": frappe.get_fullname(user),
+            "employee_name": frappe.utils.get_fullname(user),
             "company": "",
             "department": "",
         },
@@ -95,6 +96,7 @@ def employee_portal_get_boot_data():
 
         project_rows = frappe.db.get_list(
             "Project",
+            filters={"status": "Open"},
             fields=["name", "project_name"],
             order_by="project_name asc",
             limit_page_length=500,
@@ -116,7 +118,7 @@ def employee_portal_get_boot_data():
         # Permission-wise Tasks
         # -----------------------------------------------------
 
-        task_filters = {"status": ["!=", "Cancelled"], "is_group": 0}
+        task_filters = {"status": ["not in", ["Cancelled", "Completed"]], "is_group": 0}
 
         if selected_project:
             task_filters["project"] = selected_project
@@ -519,6 +521,7 @@ def employee_portal_get_boot_data():
     frappe.response["message"] = boot_data
 
 
+@frappe.whitelist()
 def employee_portal_start_day():
     # Employee Portal - Start Day / Entry
     # Creates one Employee Checkin with:
@@ -591,7 +594,10 @@ def employee_portal_start_day():
     }
 
 
+@frappe.whitelist()
 def employee_portal_start_break():
+    # employee_portal_start_break
+
     user = frappe.session.user
 
     if user == "Guest":
@@ -676,7 +682,10 @@ def employee_portal_start_break():
     }
 
 
+@frappe.whitelist()
 def employee_portal_end_break():
+    # employee_portal_end_break
+
     user = frappe.session.user
 
     if user == "Guest":
@@ -732,6 +741,7 @@ def employee_portal_end_break():
     }
 
 
+@frappe.whitelist()
 def employee_portal_end_day():
     user = frappe.session.user
 
@@ -820,6 +830,7 @@ def employee_portal_end_day():
     }
 
 
+@frappe.whitelist()
 def employee_portal_start_work():
     user = frappe.session.user
 
@@ -836,13 +847,19 @@ def employee_portal_start_work():
     if not employee:
         frappe.throw("No active Employee is linked with this User.")
 
-    project = frappe.form_dict.get("project") or ""
-    task = frappe.form_dict.get("task") or ""
-    activity_type = frappe.form_dict.get("activity_type") or ""
-    description = frappe.form_dict.get("description") or ""
+    project = (frappe.form_dict.get("project") or "").strip()
 
-    if not activity_type:
-        frappe.throw("Please select Activity Type.")
+    task = (frappe.form_dict.get("task") or "").strip()
+
+    activity_type = (frappe.form_dict.get("activity_type") or "").strip()
+
+    description = (frappe.form_dict.get("description") or "").strip()
+
+    # At least one work-related value is required.
+    if not (project or task or activity_type or description):
+        frappe.throw(
+            "Please select a Project, Task, " "Activity Type, or enter a Description."
+        )
 
     # ---------------------------------------------------------
     # Attendance validation
@@ -878,15 +895,18 @@ def employee_portal_start_work():
     # Permission-wise Activity Type validation
     # ---------------------------------------------------------
 
-    activity_rows = frappe.db.get_list(
-        "Activity Type",
-        filters={"name": activity_type},
-        fields=["name"],
-        limit_page_length=1,
-    )
+    if activity_type:
+        activity_rows = frappe.db.get_list(
+            "Activity Type",
+            filters={"name": activity_type},
+            fields=["name"],
+            limit_page_length=1,
+        )
 
-    if not activity_rows:
-        frappe.throw("Activity Type does not exist or you do not have permission.")
+        if not activity_rows:
+            frappe.throw(
+                "Activity Type does not exist " "or you do not have permission."
+            )
 
     # ---------------------------------------------------------
     # Permission-wise Project validation
@@ -964,7 +984,7 @@ def employee_portal_start_work():
                 "end_date": today,
                 "time_logs": [
                     {
-                        "activity_type": activity_type,
+                        "activity_type": activity_type or None,
                         "project": project or None,
                         "task": task or None,
                         "description": description,
@@ -983,7 +1003,7 @@ def employee_portal_start_work():
         timesheet.append(
             "time_logs",
             {
-                "activity_type": activity_type,
+                "activity_type": activity_type or None,
                 "project": project or None,
                 "task": task or None,
                 "description": description,
@@ -997,6 +1017,7 @@ def employee_portal_start_work():
     frappe.response["message"] = {"success": True, "timesheet": timesheet.name}
 
 
+@frappe.whitelist()
 def employee_portal_switch_task():
     # API Method:
     # employee_portal_switch_task
@@ -1058,6 +1079,7 @@ def employee_portal_switch_task():
     }
 
 
+@frappe.whitelist()
 def employee_portal_create_task():
     user = frappe.session.user
 
@@ -1140,6 +1162,7 @@ def employee_portal_create_task():
     }
 
 
+@frappe.whitelist()
 def employee_portal_get_attendance_history():
     # API Method:
     # employee_portal_get_attendance_history
@@ -1635,4 +1658,3 @@ def employee_portal_get_attendance_history():
         },
         "rows": history_rows,
     }
-

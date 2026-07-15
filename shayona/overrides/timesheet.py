@@ -8,7 +8,7 @@ class CustomTimesheet(Timesheet):
 def validate(doc, method):
     doc.check_timesheet_exists()
     doc.check_employee_set_or_not()
-    doc.allow_timer_start_end()
+    # doc.allow_timer_start_end()
 
 
 def before_insert(doc, method):
@@ -17,7 +17,8 @@ def before_insert(doc, method):
 
 
 def before_save(doc, method):
-    doc.calculate_total_break_hours()
+    # doc.calculate_total_break_hours()
+    pass
 
 
 def before_submit(doc, method):

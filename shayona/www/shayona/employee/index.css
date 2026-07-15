@@ -5,7 +5,10 @@
 .swp-page {
     --swp-primary: #1663ff;
     --swp-primary-dark: #0f4fd1;
+
     --swp-success: #159c53;
+    --swp-success-dark: #0f7d42;
+
     --swp-warning: #ee8b11;
     --swp-danger: #de3d3d;
 
@@ -1004,6 +1007,7 @@ body {
 }
 
 .swp-btn-outline-primary,
+.swp-btn-outline-success,
 .swp-btn-outline-warning,
 .swp-btn-outline-danger {
     background: #ffffff;
@@ -1013,6 +1017,13 @@ body {
 
 .swp-btn-outline-primary {
     color: var(--swp-primary);
+
+    border:
+        1px solid rgba(22, 99, 255, 0.28);
+}
+
+.swp-btn-outline-success {
+    color: var(--swp-success);
 
     border:
         1px solid rgba(22, 99, 255, 0.28);
@@ -1036,6 +1047,7 @@ body {
    Filled Action Buttons
 ========================================================= */
 
+.swp-btn-outline-success,
 .swp-btn-outline-primary,
 .swp-btn-outline-warning,
 .swp-btn-outline-danger {
@@ -1047,7 +1059,7 @@ body {
 }
 
 
-/* Entry / Primary */
+/* Primary */
 
 .swp-btn-outline-primary {
     background: var(--swp-primary);
@@ -1057,6 +1069,18 @@ body {
 .swp-btn-outline-primary:hover:not(:disabled) {
     background: var(--swp-primary-dark);
     border-color: var(--swp-primary-dark);
+}
+
+/* Entry */
+
+.swp-btn-outline-success {
+    background: var(--swp-success);
+    border-color: var(--swp-success);
+}
+
+.swp-btn-outline-success:hover:not(:disabled) {
+    background: var(--swp-success-dark);
+    border-color: var(--swp-success-dark);
 }
 
 

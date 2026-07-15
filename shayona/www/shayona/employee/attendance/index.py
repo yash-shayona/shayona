@@ -10,7 +10,7 @@ def get_context(context):
 
     context.no_cache = 1
 
-    context.show_sidebar = 1
+    context.show_sidebar = 0
     # context.sidebar_title = "Employee Portal"
     context.sidebar_columns = 2
 

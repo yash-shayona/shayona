@@ -9,15 +9,17 @@ const state = {
     attendanceActionInProgress: false
 };
 
+const PORTAL_API_BASE = "shayona.api.employee_portal.";
+
 const PORTAL_METHODS = {
-    get_boot_data: "employee_portal_get_boot_data",
-    start_day: "employee_portal_start_day",
-    start_work: "employee_portal_start_work",
-    create_task: "employee_portal_create_task",
-    start_break: "employee_portal_start_break",
-    end_break: "employee_portal_end_break",
-    switch_task: "employee_portal_switch_task",
-    end_day: "employee_portal_end_day"
+    get_boot_data: `${PORTAL_API_BASE}employee_portal_get_boot_data`,
+    start_day: `${PORTAL_API_BASE}employee_portal_start_day`,
+    start_work: `${PORTAL_API_BASE}employee_portal_start_work`,
+    create_task: `${PORTAL_API_BASE}employee_portal_create_task`,
+    start_break: `${PORTAL_API_BASE}employee_portal_start_break`,
+    end_break: `${PORTAL_API_BASE}employee_portal_end_break`,
+    switch_task: `${PORTAL_API_BASE}employee_portal_switch_task`,
+    end_day: `${PORTAL_API_BASE}employee_portal_end_day`
 };
 
 const LOCATION_CACHE_MS = 60000;
@@ -693,13 +695,21 @@ async function submitCreateTask() {
     }
 
     const currentValues = getFormValues();
+
     const originalText =
         submitButton.textContent;
 
     submitButton.disabled = true;
-    submitButton.textContent = "Creating...";
+    submitButton.textContent =
+        "Creating & Starting...";
+
+    let createdTask = "";
 
     try {
+        /*
+         * Step 1:
+         * Create the new Task.
+         */
         const result = await callPortal(
             "create_task",
             {
@@ -709,37 +719,61 @@ async function submitCreateTask() {
             }
         );
 
-        const boot = await callPortal(
-            "get_boot_data",
-            { project }
+        createdTask = result.task;
+
+        /*
+         * Step 2:
+         * Immediately start work on the newly created Task.
+         */
+        await callPortal(
+            "start_work",
+            {
+                project,
+                task: createdTask,
+                activity_type:
+                    currentValues.activity_type,
+                description:
+                    currentValues.description
+            }
         );
 
-        boot.selected_values = {
-            ...(boot.selected_values || {}),
-            project,
-            task: result.task,
-            activity_type:
-                currentValues.activity_type || "",
-            description:
-                currentValues.description || ""
-        };
+        /*
+         * Step 3:
+         * Reload actual backend state.
+         *
+         * Backend status should now become "Working"
+         * and current_work_session should contain
+         * the newly created Task.
+         */
+        const boot = await callPortal(
+            "get_boot_data"
+        );
 
         closeCreateTaskDialog();
         setBootState(boot);
 
         frappe.show_alert({
             message:
-                "Task created and selected.",
+                "Task created and work started successfully.",
             indicator: "green"
         });
     } catch (error) {
+        /*
+         * Task creation and Start Work are two separate
+         * backend calls.
+         *
+         * Therefore, it is possible that Task was created
+         * successfully but Start Work failed.
+         */
         if (!hasServerMessages(error)) {
-            frappe.msgprint(
-                getErrorMessage(
-                    error,
-                    __("Unable to create task.")
-                )
+            const message = getErrorMessage(
+                error,
+                createdTask
+                    ? "Task was created, but work could not be started."
+                    : "Unable to create Task."
             );
+
+            frappe.msgprint(message);
         }
     } finally {
         submitButton.disabled = false;
@@ -1703,12 +1737,17 @@ async function withAction(
     }
 }
 
-function validateWorkForm() {
-    const values = getFormValues();
+function validateWorkForm(values = getFormValues()) {
+    const hasWorkInformation = Boolean(
+        values.project
+        || values.task
+        || values.activity_type
+        || values.description
+    );
 
-    if (!values.activity_type) {
+    if (!hasWorkInformation) {
         frappe.msgprint(
-            "Please select Activity Type."
+            "Please select a Project, Task, Activity Type, or enter a Description."
         );
 
         return false;
@@ -1875,12 +1914,12 @@ function bindEvents() {
         ?.addEventListener(
             "click",
             async () => {
-                if (!validateWorkForm()) {
-                    return;
-                }
-
                 const values =
                     getFormValues();
+
+                if (!validateWorkForm(values)) {
+                    return;
+                }
 
                 await withAction(
                     () => callPortal(

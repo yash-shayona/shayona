@@ -1,5 +1,5 @@
 const ATTENDANCE_HISTORY_METHOD =
-    "employee_portal_get_attendance_history";
+    "shayona.api.employee_portal.employee_portal_get_attendance_history";
 
 const attendanceHistoryState = {
     data: null,
