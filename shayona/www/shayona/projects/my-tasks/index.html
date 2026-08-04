@@ -1,0 +1,55 @@
+{% extends "templates/pages/project_portal/base.html" %}
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{% block portal_content %}
+{# This route lists the logged-in user's permitted Tasks and opens a read-only detail drawer. #}
+<section id="my-tasks-view" class="epp-view">
+    <div class="epp-view-header">
+        <div class="epp-view-header-copy">
+            <div>
+                <span class="epp-section-label">Task Management</span>
+                <h2>My Tasks</h2>
+                <p>Review the tasks assigned to you and their current progress.</p>
+            </div>
+        </div>
+        <span id="my-tasks-result-count" class="epp-result-count">0 Tasks</span>
+    </div>
+
+    <section class="epp-card epp-project-filter-card">
+        <div class="epp-my-task-filter-grid">
+            <div class="epp-filter-field epp-filter-search">
+                <label for="my-task-search">Search</label>
+                <div class="epp-search-control"><span class="epp-search-icon" aria-hidden="true">{{ epp_icon("search") }}</span><input id="my-task-search" type="search" placeholder="Search task name or subject..." autocomplete="off"></div>
+            </div>
+            <div class="epp-filter-field">
+                <label for="my-task-status-filter">Status</label>
+                <select id="my-task-status-filter"><option value="All">All Statuses</option><option value="Open">Open</option><option value="Working">Working</option><option value="Pending Review">Pending Review</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select>
+            </div>
+            <div class="epp-filter-field">
+                <label for="my-task-priority-filter">Priority</label>
+                <select id="my-task-priority-filter"><option value="All">All Priorities</option><option value="Urgent">Urgent</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+            </div>
+            <div class="epp-filter-field">
+                <label for="my-task-due-filter">Due</label>
+                <select id="my-task-due-filter"><option value="All">All Dates</option><option value="Overdue">Overdue</option><option value="Today">Due Today</option></select>
+            </div>
+            <div class="epp-filter-action"><button id="btn-reset-my-task-filters" type="button" class="epp-secondary-button">Reset Filters</button></div>
+        </div>
+    </section>
+
+    <div id="my-tasks-loading" class="epp-card epp-projects-loading hidden"><div class="epp-loading-spinner"></div><strong>Loading My Tasks</strong><span>Please wait while your permitted tasks are loaded.</span></div>
+    <div id="my-tasks-error" class="epp-alert epp-alert-error hidden"></div>
+    <section id="my-tasks-list" class="epp-card epp-my-task-list"><div class="epp-section-empty">Loading your permitted tasks...</div></section>
+    <div id="my-tasks-pagination" class="epp-pagination hidden">
+        <button id="btn-my-task-previous" type="button" class="epp-pagination-button" disabled>{{ epp_icon("arrow-left") }}<span>Previous</span></button>
+        <div class="epp-pagination-status"><span>Page</span><strong id="my-tasks-current-page">1</strong></div>
+        <button id="btn-my-task-next" type="button" class="epp-pagination-button" disabled><span>Next</span>{{ epp_icon("arrow-right") }}</button>
+    </div>
+</section>
+
+<div id="my-task-drawer-backdrop" class="epp-task-drawer-backdrop hidden"></div>
+<aside id="my-task-drawer" class="epp-task-drawer" aria-hidden="true" aria-label="Task details">
+    <div class="epp-task-drawer-header"><div><span class="epp-section-label">Task Details</span><h2 id="my-task-detail-subject">Task</h2></div><button id="btn-close-my-task-drawer" type="button" class="epp-task-drawer-close" aria-label="Close task details">{{ epp_icon("x", "md") }}</button></div>
+    <div id="my-task-drawer-content" class="epp-task-drawer-content"><div class="epp-loading-state">Select a task to view its details.</div></div>
+</aside>
+{% endblock %}

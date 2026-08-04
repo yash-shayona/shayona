@@ -118,18 +118,23 @@ def employee_portal_get_boot_data():
         # Permission-wise Tasks
         # -----------------------------------------------------
 
-        task_filters = {"status": ["not in", ["Cancelled", "Completed"]], "is_group": 0}
-
+        task_rows = []
+        
         if selected_project:
+            task_filters = {
+                "status": ["not in", ["Cancelled", "Completed"]],
+                "is_group": 0,
+            }
+
             task_filters["project"] = selected_project
 
-        task_rows = frappe.db.get_list(
-            "Task",
-            filters=task_filters,
-            fields=["name", "subject", "project", "status"],
-            order_by="subject asc",
-            limit_page_length=500,
-        )
+            task_rows = frappe.db.get_list(
+                "Task",
+                filters=task_filters,
+                fields=["name", "subject", "project", "status"],
+                order_by="subject asc",
+                limit_page_length=500,
+            )
 
         tasks = []
 

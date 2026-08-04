@@ -1,7 +1,7 @@
 {
  "app": "shayona",
  "charts": [],
- "content": "[{\"id\":\"R8rY1Fefx3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Masters </span>\",\"col\":12}},{\"id\":\"PdgWry7waJ\",\"type\":\"card\",\"data\":{\"card_name\":\"RBS\",\"col\":4}},{\"id\":\"vYYWHKDjLK\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "content": "[{\"id\":\"R8rY1Fefx3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Masters </span>\",\"col\":12}},{\"id\":\"PdgWry7waJ\",\"type\":\"card\",\"data\":{\"card_name\":\"RBS\",\"col\":4}},{\"id\":\"vYYWHKDjLK\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"a04_hbXoBO\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Web Pages</b></span>\",\"col\":12}},{\"id\":\"pNyaBlXP6m\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"EWP\",\"col\":3}},{\"id\":\"QyJ4DJne_D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"EPP\",\"col\":3}}]",
  "creation": "2026-05-06 10:30:36.407180",
  "custom_blocks": [],
  "docstatus": 0,
@@ -9,7 +9,7 @@
  "for_user": "",
  "hide_custom": 0,
  "icon": "grid",
- "idx": 1,
+ "idx": 2,
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Shayona",
@@ -94,8 +94,8 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-30 14:46:21.413644",
- "modified_by": "Administrator",
+ "modified": "2026-08-04 16:33:58.464468",
+ "modified_by": "yashsolanki@shayonatechnology.com",
  "module": "Shayona",
  "name": "Shayona",
  "number_cards": [],
@@ -105,7 +105,22 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 23.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "EWP",
+   "type": "URL",
+   "url": "/shayona/employee"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "EPP",
+   "type": "URL",
+   "url": "/shayona/projects"
+  }
+ ],
  "title": "Shayona",
  "type": "Workspace"
 }

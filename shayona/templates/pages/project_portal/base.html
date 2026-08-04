@@ -1,0 +1,53 @@
+{% extends "templates/web.html" %}
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{% block title %}{{ portal_title or "Employee Project Portal" }}{% endblock %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="/assets/shayona/css/project_portal.css">
+{% endblock %}
+
+{% block page_content %}
+{# This shared shell gives every portal route the same navigation and responsive header. #}
+<div class="epp-layout" data-epp-page="{{ portal_page }}" data-epp-project-name="{{ (project_name or '') | e }}">
+    {% include "templates/includes/project_portal/sidebar.html" %}
+    <div id="epp-sidebar-backdrop" class="epp-sidebar-backdrop hidden"></div>
+
+    <main class="epp-main">
+        <header class="epp-header">
+            <div class="epp-header-left">
+                <button id="btn-toggle-sidebar" type="button" class="epp-mobile-menu-button" aria-label="Open menu">
+                    {{ epp_icon("menu", "md") }}
+                </button>
+                <div>
+                    <p class="epp-page-label">Project Management</p>
+                    <h1 id="dashboard-greeting">Welcome</h1>
+                    <p class="epp-header-description">Track your projects, tasks and current work.</p>
+                </div>
+            </div>
+
+            <div class="epp-header-right">
+                <div class="epp-header-chip">
+                    <span class="epp-header-chip-label">Date</span>
+                    <strong id="dashboard-date">--</strong>
+                </div>
+                <div class="epp-header-profile">
+                    <div id="header-user-avatar" class="epp-user-avatar">U</div>
+                    <div>
+                        <strong id="header-user-name">Employee</strong>
+                        <span id="header-user-email">--</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {% block portal_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block body_include %}
+{{ super() }}
+<script src="/assets/shayona/js/project_portal/portal.js"></script>
+{% endblock %}

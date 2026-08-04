@@ -57,3 +57,6 @@ jspm_packages/
 **copy
 *copy*
 * copy.*
+shayona/desktop_icon/*
+shayona/workspace_sidebar/*
+shayona/storage/*

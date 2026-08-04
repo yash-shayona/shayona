@@ -1,0 +1,14 @@
+{% extends "templates/pages/project_portal/base.html" %}
+
+{% block portal_content %}
+{# This shared route shell keeps future portal modules refresh-safe before their APIs are introduced. #}
+<section class="epp-view">
+    <article class="epp-card epp-section-empty">
+        <div>
+            <span class="epp-section-label">Project Management</span>
+            <h2>{{ portal_title }}</h2>
+            <p>This portal section has its own URL and will be connected to its data flow next.</p>
+        </div>
+    </article>
+</section>
+{% endblock %}

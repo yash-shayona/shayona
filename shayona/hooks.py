@@ -89,6 +89,31 @@ doctype_list_js = {
 # 	"Role": "home_page"
 # }
 
+# These specific child routes must resolve before the dynamic Project-name route.
+website_route_rules = [
+    {
+        "from_route": "/shayona/projects/dashboard",
+        "to_route": "shayona/projects/dashboard",
+    },
+    {
+        "from_route": "/shayona/projects/my-tasks",
+        "to_route": "shayona/projects/my-tasks",
+    },
+    {
+        "from_route": "/shayona/projects/task-board",
+        "to_route": "shayona/projects/task-board",
+    },
+    {
+        "from_route": "/shayona/projects/timesheets",
+        "to_route": "shayona/projects/timesheets",
+    },
+    # This handles Project detail pages after the fixed child-route names above.
+    {
+        "from_route": "/shayona/projects/<project_name>",
+        "to_route": "shayona/projects/detail",
+    }
+]
+
 # Generators
 # ----------
 

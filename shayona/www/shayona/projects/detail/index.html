@@ -1,0 +1,43 @@
+{% extends "templates/pages/project_portal/base.html" %}
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{% block portal_content %}
+{# This route renders one Project selected by the dynamic URL. #}
+<section id="project-workspace-view" class="epp-view">
+    <div class="epp-view-header"><div class="epp-view-header-copy"><div>
+        <span class="epp-section-label">Project Workspace</span>
+        <div class="epp-workspace-title-row"><h2 id="workspace-project-name">Project</h2><span id="workspace-project-status" class="epp-project-status-pill">Open</span></div>
+        <p id="workspace-project-code">--</p>
+    </div></div></div>
+
+    <div id="workspace-loading" class="epp-card epp-projects-loading hidden"><div class="epp-loading-spinner"></div><strong>Loading Project Workspace</strong><span>Please wait while project details are loaded.</span></div>
+    <div id="workspace-error" class="epp-alert epp-alert-error hidden"></div>
+
+    <div id="workspace-content" class="epp-workspace-content">
+        <section class="epp-workspace-overview-grid">
+            <article class="epp-card epp-workspace-project-card">
+                <div class="epp-card-header"><div><span class="epp-section-label">Overview</span><h2>Project Details</h2></div></div>
+                <p id="workspace-project-notes" class="epp-workspace-notes">No project description was added.</p>
+                <div class="epp-workspace-meta-grid">
+                    <div><span>Customer</span><strong id="workspace-project-customer">--</strong></div><div><span>Type</span><strong id="workspace-project-type">--</strong></div><div><span>Start Date</span><strong id="workspace-project-start-date">--</strong></div><div><span>Due Date</span><strong id="workspace-project-end-date">--</strong></div>
+                </div>
+                <div class="epp-workspace-progress-row"><div class="epp-project-progress-head"><strong>Project Completion</strong><span id="workspace-project-progress">0%</span></div><div class="epp-progress-track"><div id="workspace-project-progress-bar" class="epp-progress-bar"></div></div></div>
+            </article>
+            <aside class="epp-workspace-side-stack">
+                <article class="epp-card epp-workspace-summary-card"><span class="epp-section-label">Visible Tasks</span><h2>Project Summary</h2><div class="epp-workspace-summary-list"><div><span>Total</span><strong id="workspace-task-total">0</strong></div><div><span>Open</span><strong id="workspace-task-open">0</strong></div><div><span>Working</span><strong id="workspace-task-working">0</strong></div><div><span>In Review</span><strong id="workspace-task-review">0</strong></div><div><span>Completed</span><strong id="workspace-task-completed">0</strong></div></div></article>
+                <article class="epp-card epp-workspace-members-card"><span class="epp-section-label">Team</span><h2>Project Members</h2><div id="workspace-members" class="epp-workspace-members"><span class="epp-member-empty">No project members configured.</span></div></article>
+            </aside>
+        </section>
+
+        <section class="epp-card epp-workspace-tasks-card">
+            <div class="epp-card-header epp-workspace-tasks-header"><div><span class="epp-section-label">Tasks</span><h2>Project Tasks</h2></div><span id="workspace-task-result-count" class="epp-result-count">0 Tasks</span></div>
+            <div class="epp-workspace-task-filters">
+                <div class="epp-filter-field epp-filter-search"><label for="workspace-task-search">Search Tasks</label><div class="epp-search-control"><span class="epp-search-icon" aria-hidden="true">{{ epp_icon("search") }}</span><input id="workspace-task-search" type="search" placeholder="Search task name or subject..." autocomplete="off"></div></div>
+                <div class="epp-filter-field"><label for="workspace-task-status-filter">Status</label><select id="workspace-task-status-filter"><option value="All">All Statuses</option><option value="Open">Open</option><option value="Working">Working</option><option value="Pending Review">Pending Review</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
+            </div>
+            <div id="workspace-task-list" class="epp-workspace-task-list"><div class="epp-section-empty">Loading permitted tasks...</div></div>
+            <div id="workspace-task-pagination" class="epp-pagination hidden"><button id="btn-workspace-task-previous" type="button" class="epp-pagination-button" disabled>{{ epp_icon("arrow-left") }}<span>Previous</span></button><div class="epp-pagination-status"><span>Page</span><strong id="workspace-task-current-page">1</strong></div><button id="btn-workspace-task-next" type="button" class="epp-pagination-button" disabled><span>Next</span>{{ epp_icon("arrow-right") }}</button></div>
+        </section>
+    </div>
+</section>
+{% endblock %}

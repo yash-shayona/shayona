@@ -1,0 +1,6 @@
+{# This macro renders an icon from Frappe's built-in Lucide website sprite. #}
+{% macro epp_icon(name, size="sm") %}
+<svg class="epp-ui-icon epp-ui-icon-{{ size }}" aria-hidden="true">
+    <use href="#icon-{{ name }}"></use>
+</svg>
+{% endmacro %}

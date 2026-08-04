@@ -1,0 +1,49 @@
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{# This shared navigation keeps every portal screen on its own refresh-safe URL. #}
+<aside class="epp-sidebar">
+    <div class="epp-sidebar-brand">
+        <div class="epp-brand-icon">{{ epp_icon("briefcase", "md") }}</div>
+        <div class="epp-brand-copy">
+            <strong>EWP</strong>
+            <span>Project Portal</span>
+        </div>
+    </div>
+
+    <nav class="epp-sidebar-nav">
+        <a href="/shayona/employee" class="epp-nav-item">
+            <span class="epp-nav-icon">{{ epp_icon("calendar-days") }}</span>
+            <span>Today</span>
+        </a>
+        <a href="/shayona/projects/dashboard" class="epp-nav-item {% if portal_page == 'dashboard' %}is-active{% endif %}">
+            <span class="epp-nav-icon">{{ epp_icon("layout-dashboard") }}</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="/shayona/projects" class="epp-nav-item {% if portal_page in ('projects', 'workspace') %}is-active{% endif %}">
+            <span class="epp-nav-icon">{{ epp_icon("folder-kanban") }}</span>
+            <span>Projects</span>
+        </a>
+        <a href="/shayona/projects/my-tasks" class="epp-nav-item {% if portal_page == 'my-tasks' %}is-active{% endif %}">
+            <span class="epp-nav-icon">{{ epp_icon("list-todo") }}</span>
+            <span>My Tasks</span>
+        </a>
+        <a href="/shayona/projects/task-board" class="epp-nav-item {% if portal_page == 'task-board' %}is-active{% endif %}">
+            <span class="epp-nav-icon">{{ epp_icon("columns-3") }}</span>
+            <span>Task Board</span>
+        </a>
+        <a href="/shayona/projects/timesheets" class="epp-nav-item {% if portal_page == 'timesheets' %}is-active{% endif %}">
+            <span class="epp-nav-icon">{{ epp_icon("clock-3") }}</span>
+            <span>Timesheets</span>
+        </a>
+    </nav>
+
+    <div class="epp-sidebar-footer">
+        <div class="epp-sidebar-user">
+            <div id="sidebar-user-avatar" class="epp-user-avatar">U</div>
+            <div class="epp-sidebar-user-copy">
+                <strong id="sidebar-user-name">Employee</strong>
+                <span id="sidebar-user-department">Department</span>
+            </div>
+        </div>
+    </div>
+</aside>

@@ -1,0 +1,22 @@
+{% extends "templates/pages/project_portal/base.html" %}
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{% block portal_content %}
+{# This route is the read-only dashboard and loads its data after the page shell renders. #}
+<section id="dashboard-setup-card" class="epp-card epp-setup-card hidden"><h3>Portal Setup Required</h3><p id="dashboard-setup-message">Required employee setup is missing.</p></section>
+<div id="dashboard-alert" class="epp-alert hidden"></div>
+<section id="dashboard-view" class="epp-view">
+    <section class="epp-summary-grid">
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-project">{{ epp_icon("briefcase", "md") }}</div><span class="epp-summary-label">Active Projects</span></div><strong id="summary-active-projects" class="epp-summary-value">0</strong><span class="epp-summary-help">Projects currently open</span></article>
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-task">{{ epp_icon("list-todo", "md") }}</div><span class="epp-summary-label">My Tasks</span></div><strong id="summary-my-tasks" class="epp-summary-value">0</strong><span class="epp-summary-help">Open tasks assigned to you</span></article>
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-overdue">{{ epp_icon("triangle-alert", "md") }}</div><span class="epp-summary-label">Overdue Tasks</span></div><strong id="summary-overdue-tasks" class="epp-summary-value">0</strong><span class="epp-summary-help">Tasks past their due date</span></article>
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-completed">{{ epp_icon("circle-check", "md") }}</div><span class="epp-summary-label">Completed This Week</span></div><strong id="summary-completed-week" class="epp-summary-value">0</strong><span class="epp-summary-help">Tasks completed this week</span></article>
+    </section>
+    <section class="epp-dashboard-grid">
+        <article class="epp-card epp-current-work-card"><div class="epp-card-header"><div><span class="epp-section-label">My Work</span><h2>Current Task</h2></div><span id="current-work-status" class="epp-status-pill">Not Working</span></div><div id="current-work-empty" class="epp-section-empty">No active work session.</div><div id="current-work-content" class="hidden"><strong id="current-work-task">--</strong><p id="current-work-project">--</p><div class="epp-current-work-details"><span>Activity: <strong id="current-work-activity">--</strong></span><span>Started: <strong id="current-work-started-at">--</strong></span><span>Duration: <strong id="current-work-duration">00:00:00</strong></span></div><p id="current-work-description">--</p></div></article>
+        <article class="epp-card"><div class="epp-card-header"><div><span class="epp-section-label">Upcoming</span><h2>Deadlines</h2></div></div><div id="upcoming-deadline-list" class="epp-list"><div class="epp-loading-state">Loading deadlines...</div></div></article>
+        <article class="epp-card"><div class="epp-card-header"><div><span class="epp-section-label">Activity</span><h2>Recent Updates</h2></div></div><div id="recent-activity-list" class="epp-list"><div class="epp-loading-state">Loading activity...</div></div></article>
+    </section>
+    <section class="epp-card epp-project-progress-card"><div class="epp-card-header"><div><span class="epp-section-label">Portfolio Overview</span><h2>Project Progress</h2></div><a href="/shayona/projects" class="epp-text-button">View All Projects</a></div><div id="project-progress-list" class="epp-project-progress-grid"><div class="epp-loading-state">Loading project progress...</div></div></section>
+</section>
+{% endblock %}
