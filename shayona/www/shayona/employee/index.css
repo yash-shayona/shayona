@@ -51,6 +51,12 @@ body {
     min-height: 100vh;
 }
 
+body:has(.swp-page) .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+}
+
 
 /* =========================================================
    Header
