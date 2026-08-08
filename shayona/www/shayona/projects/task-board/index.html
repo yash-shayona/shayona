@@ -1,1 +1,29 @@
-{% extends "templates/pages/project_portal/coming_soon.html" %}
+{% extends "templates/pages/project_portal/base.html" %}
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{% block portal_content %}
+{# The board is limited to the logged-in employee's Tasks, matching the existing My Tasks scope. #}
+<section id="task-board-view" class="epp-view epp-task-board-view">
+    <section class="epp-card epp-project-filter-card">
+        <div class="epp-task-board-filter-grid">
+            <div class="epp-filter-field epp-filter-search">
+                <label for="task-board-search">Search</label>
+                <div class="epp-search-control">
+                    <span class="epp-search-icon" aria-hidden="true">{{ epp_icon("search") }}</span>
+                    <input id="task-board-search" type="search" placeholder="Search task name or subject..." autocomplete="off">
+                </div>
+            </div>
+            <div class="epp-filter-action">
+                <button id="btn-reset-task-board-filters" type="button" class="epp-secondary-button">Reset Search</button>
+            </div>
+        </div>
+        <div class="epp-filter-footer"><span id="task-board-result-count" class="epp-result-count">0 Tasks</span></div>
+    </section>
+
+    <div class="epp-task-board-scroll-panel">
+        <div id="task-board-loading" class="epp-card epp-projects-loading hidden"><div class="epp-loading-spinner"></div><strong>Loading Task Board</strong><span>Please wait while your assigned tasks are loaded.</span></div>
+        <div id="task-board-error" class="epp-alert epp-alert-error hidden"></div>
+        <section id="task-board-lanes" class="epp-task-board-lanes" aria-live="polite"><div class="epp-card epp-section-empty">Loading your assigned tasks...</div></section>
+    </div>
+</section>
+{% endblock %}

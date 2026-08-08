@@ -33,6 +33,22 @@ PORTAL_TASK_MANAGER_ROLES = frozenset(
     {"System Manager", "Projects Manager", "Projects User"}
 )
 
+# These fixed ranges keep the portal report bounded while covering the employee timesheet view.
+PORTAL_TIMESHEET_PERIODS = frozenset({"Today", "This Week", "This Month"})
+
+
+def _get_portal_timesheet_date_range(period):
+    # This returns server-derived dates so the browser cannot request an unbounded report range.
+    today = frappe.utils.getdate(frappe.utils.today())
+
+    if period == "Today":
+        return today, today
+
+    if period == "This Month":
+        return frappe.utils.get_first_day(today), frappe.utils.get_last_day(today)
+
+    return frappe.utils.add_days(today, -today.weekday()), today
+
 
 def _get_portal_task_fields(task_meta):
     # This returns only Task fields that exist in the current ERPNext schema.
@@ -1246,6 +1262,341 @@ def employee_project_portal_get_my_tasks():
             "has_previous": page > 1,
             "has_more": has_more,
         },
+    }
+
+
+@frappe.whitelist()
+def employee_project_portal_get_my_timesheets():
+    # This returns only the logged-in employee's standard Timesheets and time-log summaries.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+
+    period = frappe.utils.cstr(frappe.form_dict.get("period") or "This Week").strip()
+    status = frappe.utils.cstr(frappe.form_dict.get("status") or "All").strip()
+    page = max(frappe.utils.cint(frappe.form_dict.get("page") or 1), 1)
+    page_length = min(
+        max(frappe.utils.cint(frappe.form_dict.get("page_length") or 10), 1),
+        50,
+    )
+
+    if period not in PORTAL_TIMESHEET_PERIODS:
+        frappe.throw("Please select a valid timesheet period.")
+
+    if status not in ("All", "Draft", "Submitted"):
+        frappe.throw("Please select a valid timesheet status.")
+
+    start_date, end_date = _get_portal_timesheet_date_range(period)
+    response_data = {
+        "setup_complete": False,
+        "missing_setup": [],
+        "filters": {"period": period, "status": status},
+        "period": {"start_date": start_date, "end_date": end_date},
+        "summary": {
+            "today_hours": 0,
+            "period_hours": 0,
+            "draft_timesheets": 0,
+            "submitted_timesheets": 0,
+            "active_session": None,
+            "project_hours": [],
+            "task_hours": [],
+            "is_truncated": False,
+        },
+        "timesheets": [],
+        "pagination": {
+            "page": page,
+            "page_length": page_length,
+            "has_previous": page > 1,
+            "has_more": False,
+        },
+    }
+
+    employee = frappe.db.get_value(
+        "Employee",
+        {"user_id": user, "status": "Active"},
+        ["name", "employee_name"],
+        as_dict=True,
+    )
+
+    if not employee:
+        response_data["missing_setup"] = [
+            "Active Employee is not linked with logged-in User"
+        ]
+        frappe.response["message"] = response_data
+        return
+
+    response_data["setup_complete"] = True
+    timesheet_filters = {
+        "employee": employee.name,
+        "start_date": ["between", [start_date, end_date]],
+        "docstatus": ["<", 2],
+    }
+
+    if status == "Draft":
+        timesheet_filters["docstatus"] = 0
+    elif status == "Submitted":
+        timesheet_filters["docstatus"] = 1
+
+    timesheet_fields = [
+        "name",
+        "start_date",
+        "end_date",
+        "status",
+        "docstatus",
+        "total_hours",
+        "modified",
+    ]
+
+    # Employee portal users may not have broad Desk read access to Timesheet. This query is safe
+    # because the API already authenticated the user and constrains every returned row to their Employee.
+    summary_rows = frappe.get_all(
+        "Timesheet",
+        filters=timesheet_filters,
+        fields=timesheet_fields,
+        order_by="start_date desc, modified desc",
+        limit_page_length=501,
+    )
+    is_truncated = len(summary_rows) > 500
+
+    if is_truncated:
+        summary_rows = summary_rows[:500]
+
+    page_start = (page - 1) * page_length
+    page_rows = summary_rows[page_start : page_start + page_length]
+    # Do not expose an empty page after the bounded result set; truncation is reported separately.
+    response_data["pagination"]["has_more"] = len(summary_rows) > page_start + page_length
+
+    timesheet_names = [row.name for row in summary_rows]
+    time_log_rows = []
+
+    if timesheet_names:
+        time_log_rows = frappe.get_all(
+            "Timesheet Detail",
+            filters={"parent": ["in", timesheet_names], "parenttype": "Timesheet"},
+            fields=[
+                "parent",
+                "idx",
+                "activity_type",
+                "from_time",
+                "to_time",
+                "hours",
+                "completed",
+                "project",
+                "task",
+                "description",
+            ],
+            order_by="parent asc, idx asc",
+            limit_page_length=5000,
+        )
+
+    task_names = sorted({row.task for row in time_log_rows if row.task})
+    project_names = sorted({row.project for row in time_log_rows if row.project})
+    task_label_map = {}
+    project_label_map = {}
+
+    if task_names:
+        for task in frappe.db.get_list(
+            "Task",
+            filters={"name": ["in", task_names]},
+            fields=["name", "subject"],
+            limit_page_length=1000,
+        ):
+            task_label_map[task.name] = task.subject or task.name
+
+    if project_names:
+        for project in frappe.db.get_list(
+            "Project",
+            filters={"name": ["in", project_names]},
+            fields=["name", "project_name"],
+            limit_page_length=1000,
+        ):
+            project_label_map[project.name] = project.project_name or project.name
+
+    time_logs_by_timesheet = {row.name: [] for row in summary_rows}
+    project_hours = {}
+    task_hours = {}
+    today = frappe.utils.getdate(frappe.utils.today())
+    now = frappe.utils.now_datetime()
+    active_session = None
+    today_hours = 0
+    period_hours = 0
+
+    for row in time_log_rows:
+        is_running = bool(row.from_time and not row.to_time and not row.completed)
+        duration_hours = frappe.utils.flt(row.hours)
+
+        if is_running:
+            duration_hours = max(
+                frappe.utils.time_diff_in_seconds(now, row.from_time) / 3600,
+                0,
+            )
+
+        project_key = row.project or ""
+        task_key = row.task or ""
+        project_hours[project_key] = project_hours.get(project_key, 0) + duration_hours
+        task_hours[task_key] = task_hours.get(task_key, 0) + duration_hours
+        period_hours += duration_hours
+
+        if row.from_time and frappe.utils.getdate(row.from_time) == today:
+            today_hours += duration_hours
+
+        time_log_payload = {
+            "activity_type": row.activity_type or "",
+            "from_time": row.from_time,
+            "to_time": row.to_time,
+            "hours": duration_hours,
+            "is_running": is_running,
+            "project": project_key,
+            "project_label": project_label_map.get(project_key) or project_key or "No Project",
+            "task": task_key,
+            "task_label": task_label_map.get(task_key) or task_key or "No Task",
+            "description": frappe.utils.strip_html(row.description or ""),
+        }
+        time_logs_by_timesheet.setdefault(row.parent, []).append(time_log_payload)
+
+        if is_running and not active_session:
+            active_session = time_log_payload
+
+    response_data["summary"].update(
+        {
+            "today_hours": today_hours,
+            "period_hours": period_hours,
+            "draft_timesheets": sum(row.docstatus == 0 for row in summary_rows),
+            "submitted_timesheets": sum(row.docstatus == 1 for row in summary_rows),
+            "active_session": active_session,
+            "is_truncated": is_truncated,
+            "project_hours": [
+                {
+                    "name": project_name or "No Project",
+                    "label": project_label_map.get(project_name)
+                    or project_name
+                    or "No Project",
+                    "hours": hours,
+                }
+                for project_name, hours in sorted(
+                    project_hours.items(), key=lambda item: item[1], reverse=True
+                )[:5]
+            ],
+            "task_hours": [
+                {
+                    "name": task_name or "No Task",
+                    "label": task_label_map.get(task_name) or task_name or "No Task",
+                    "hours": hours,
+                }
+                for task_name, hours in sorted(
+                    task_hours.items(), key=lambda item: item[1], reverse=True
+                )[:5]
+            ],
+        }
+    )
+
+    response_data["timesheets"] = [
+        {
+            "name": row.name,
+            "start_date": row.start_date,
+            "end_date": row.end_date,
+            "status": "Draft" if row.docstatus == 0 else "Submitted",
+            "total_hours": sum(
+                log["hours"] for log in time_logs_by_timesheet.get(row.name, [])
+            ),
+            "time_logs": time_logs_by_timesheet.get(row.name, []),
+        }
+        for row in page_rows
+    ]
+
+    frappe.response["message"] = response_data
+
+
+@frappe.whitelist()
+def employee_project_portal_get_task_board():
+    # This returns the current user's assigned Tasks grouped client-side by configured status.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+
+    task_meta = frappe.get_meta("Task")
+
+    if not task_meta.has_field("custom_task_owner"):
+        frappe.throw("Task field custom_task_owner is required for Task Board.")
+
+    search = frappe.utils.cstr(frappe.form_dict.get("search") or "").strip()
+    board_statuses = [
+        status
+        for status in _get_task_select_options(task_meta, "status")
+        if status not in ("Template", "Cancelled")
+    ]
+
+    # Task has a standard status Select, but retain a useful board if a custom schema omits options.
+    if not board_statuses:
+        board_statuses = ["Open"]
+
+    task_filters = {
+        "custom_task_owner": user,
+        "is_group": 0,
+        "status": ["in", board_statuses],
+    }
+    task_or_filters = {}
+
+    if search:
+        search_value = "%{0}%".format(search)
+        task_or_filters = {
+            "name": ["like", search_value],
+            "subject": ["like", search_value],
+        }
+
+    # A board needs all lanes in one response. Keep the response bounded and disclose truncation.
+    board_limit = 500
+    task_rows = frappe.db.get_list(
+        "Task",
+        filters=task_filters,
+        or_filters=task_or_filters,
+        fields=_get_portal_task_fields(task_meta),
+        order_by="exp_end_date asc, modified desc",
+        limit_page_length=board_limit + 1,
+    )
+    is_truncated = len(task_rows) > board_limit
+
+    if is_truncated:
+        task_rows = task_rows[:board_limit]
+
+    today_date = frappe.utils.getdate(frappe.utils.today())
+    tasks = []
+
+    for task_row in task_rows:
+        due_date = task_row.get("exp_end_date")
+        is_overdue = bool(
+            due_date
+            and task_row.status not in PORTAL_CLOSED_TASK_STATUSES
+            and frappe.utils.getdate(due_date) < today_date
+        )
+
+        tasks.append(
+            {
+                "name": task_row.name,
+                "subject": task_row.subject or task_row.name,
+                "project": task_row.project or "",
+                "status": task_row.status or "Open",
+                "priority": task_row.get("priority") or "",
+                "due_date": due_date,
+                "progress": task_row.get("progress") or 0,
+                "expected_time": task_row.get("expected_time") or 0,
+                "actual_time": task_row.get("actual_time") or 0,
+                "is_overdue": is_overdue,
+            }
+        )
+
+    frappe.response["message"] = {
+        "filters": {"search": search},
+        "statuses": board_statuses,
+        "tasks": tasks,
+        "is_truncated": is_truncated,
+        "board_limit": board_limit,
     }
 
 

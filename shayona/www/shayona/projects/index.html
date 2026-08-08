@@ -3,21 +3,7 @@
 
 {% block portal_content %}
 {# This page lists only Projects that the logged-in user is permitted to read. #}
-<section id="projects-view" class="epp-view">
-    <div class="epp-view-header">
-        <div class="epp-view-header-copy">
-            <div>
-                <span class="epp-section-label">Project Management</span>
-                <h2>Projects</h2>
-                <p>Search and track all projects you are permitted to access.</p>
-            </div>
-        </div>
-
-        <div class="epp-view-header-actions">
-            <span id="projects-result-count" class="epp-result-count">0 Projects</span>
-        </div>
-    </div>
-
+<section id="projects-view" class="epp-view epp-list-view">
     <div class="epp-card epp-project-filter-card">
         <div class="epp-project-filter-grid">
             <div class="epp-filter-field epp-filter-search">
@@ -52,18 +38,23 @@
                 <button id="btn-reset-project-filters" type="button" class="epp-secondary-button">Reset Filters</button>
             </div>
         </div>
+        <div class="epp-filter-footer">
+            <span id="projects-result-count" class="epp-result-count">0 Projects</span>
+        </div>
     </div>
 
-    <div id="projects-loading" class="epp-card epp-projects-loading hidden">
-        <div class="epp-loading-spinner"></div>
-        <strong>Loading Projects</strong>
-        <span>Please wait while project information is loaded.</span>
-    </div>
+    <div class="epp-list-scroll-panel">
+        <div id="projects-loading" class="epp-card epp-projects-loading hidden">
+            <div class="epp-loading-spinner"></div>
+            <strong>Loading Projects</strong>
+            <span>Please wait while project information is loaded.</span>
+        </div>
 
-    <div id="projects-error" class="epp-alert epp-alert-error hidden"></div>
+        <div id="projects-error" class="epp-alert epp-alert-error hidden"></div>
 
-    <div id="projects-list" class="epp-project-list">
-        <div class="epp-card epp-section-empty">Loading permitted projects...</div>
+        <div id="projects-list" class="epp-project-list">
+            <div class="epp-card epp-section-empty">Loading permitted projects...</div>
+        </div>
     </div>
 
     <div id="projects-pagination" class="epp-pagination hidden">

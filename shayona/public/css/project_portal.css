@@ -23,7 +23,7 @@
     display: grid;
     grid-template-columns: var(--epp-sidebar-width) minmax(0, 1fr);
     width: 100%;
-    min-height: 100vh;
+    min-height: calc(100vh - var(--epp-site-navbar-height));
     color: var(--epp-text);
     background:
         radial-gradient(circle at top left, rgba(22, 99, 255, 0.1), transparent 30%),
@@ -121,8 +121,7 @@ body:has(.epp-layout) .navbar {
 }
 
 .epp-brand-copy,
-.epp-sidebar-user-copy,
-.epp-header-profile>div:last-child {
+.epp-sidebar-user-copy {
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -135,8 +134,7 @@ body:has(.epp-layout) .navbar {
 }
 
 .epp-brand-copy span,
-.epp-sidebar-user-copy span,
-.epp-header-profile span {
+.epp-sidebar-user-copy span {
     margin-top: 3px;
     color: var(--epp-muted);
     font-size: 11px;
@@ -214,8 +212,7 @@ body:has(.epp-layout) .navbar {
     border-radius: 16px;
 }
 
-.epp-sidebar-user-copy strong,
-.epp-header-profile strong {
+.epp-sidebar-user-copy strong {
     overflow: hidden;
     color: var(--epp-text);
     font-size: 13px;
@@ -243,89 +240,6 @@ body:has(.epp-layout) .navbar {
     grid-column: 2;
     min-width: 0;
     padding: 24px 28px 42px;
-}
-
-.epp-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 22px;
-    margin-bottom: 24px;
-}
-
-.epp-header-left {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    gap: 14px;
-}
-
-.epp-page-label {
-    margin: 0 0 4px;
-    color: var(--epp-primary);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-.epp-header h1 {
-    margin: 0;
-    color: var(--epp-text);
-    font-size: clamp(24px, 3vw, 32px);
-    font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.04em;
-}
-
-.epp-header-description {
-    margin: 7px 0 0;
-    color: var(--epp-muted);
-    font-size: 14px;
-}
-
-.epp-header-right {
-    display: flex;
-    align-items: center;
-    flex: 0 0 auto;
-    gap: 12px;
-}
-
-.epp-header-chip,
-.epp-header-profile {
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(220, 229, 241, 0.95);
-    border-radius: 16px;
-    box-shadow: var(--epp-shadow-small);
-}
-
-.epp-header-chip {
-    display: flex;
-    flex-direction: column;
-    min-width: 150px;
-    gap: 3px;
-    padding: 10px 14px;
-}
-
-.epp-header-chip-label {
-    color: var(--epp-muted);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.epp-header-chip strong {
-    color: var(--epp-text);
-    font-size: 13px;
-}
-
-.epp-header-profile {
-    display: flex;
-    align-items: center;
-    min-width: 190px;
-    gap: 10px;
-    padding: 8px 12px;
 }
 
 .epp-mobile-menu-button {
@@ -952,6 +866,12 @@ body:has(.epp-layout) .navbar {
     margin-bottom: 18px;
 }
 
+.epp-filter-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
 .epp-project-filter-grid {
     display: grid;
     grid-template-columns: minmax(260px, 1.7fr) minmax(150px, 0.7fr) minmax(170px, 0.8fr) auto;
@@ -1051,6 +971,80 @@ body:has(.epp-layout) .navbar {
 .epp-project-list {
     display: grid;
     gap: 14px;
+}
+
+.epp-list-scroll-panel {
+    min-width: 0;
+}
+
+/* Desktop list pages keep navigation controls visible while their records scroll. */
+@media (min-width: 981px) {
+    .epp-main-projects,
+    .epp-main-my-tasks,
+    .epp-main-task-board {
+        height: calc(100vh - var(--epp-site-navbar-height));
+        padding-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .epp-list-view {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .epp-list-view .epp-list-scroll-panel {
+        min-height: 0;
+        padding-right: 6px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .epp-list-view .epp-pagination {
+        margin: 18px 0 0;
+    }
+
+    .epp-task-board-view {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        height: 100%;
+        min-height: 0;
+    }
+
+    .epp-task-board-scroll-panel {
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .epp-task-board-view .epp-task-board-lanes {
+        grid-auto-rows: minmax(0, 1fr);
+        align-items: stretch;
+        height: 100%;
+        min-height: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .epp-task-board-view .epp-task-board-lane {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-height: 0;
+        max-height: 100%;
+    }
+
+    .epp-task-board-view .epp-task-board-dropzone {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .epp-workspace-task-list {
+        max-height: min(520px, 58vh);
+        padding-right: 6px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
 }
 
 .epp-project-card {
@@ -1541,6 +1535,353 @@ body:has(.epp-layout) .navbar {
     white-space: nowrap;
 }
 
+/* The Task Board keeps status columns visible together and scrolls horizontally on smaller screens. */
+.epp-task-board-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) auto;
+    align-items: end;
+    gap: 14px;
+}
+
+.epp-task-board-lanes {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(260px, 1fr);
+    align-items: start;
+    gap: 16px;
+    min-width: 0;
+    padding-bottom: 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+}
+
+.epp-task-board-lane {
+    min-width: 0;
+    padding: 13px;
+    background: rgba(246, 248, 252, 0.86);
+    border: 1px solid var(--epp-border-soft);
+    border-radius: 18px;
+}
+
+.epp-task-board-lane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 1px 12px;
+}
+
+.epp-task-board-lane-header > strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 25px;
+    min-height: 25px;
+    padding: 3px 7px;
+    color: var(--epp-muted);
+    background: #fff;
+    border: 1px solid var(--epp-border-soft);
+    border-radius: 999px;
+    font-size: 11px;
+}
+
+.epp-task-board-dropzone {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    min-height: 150px;
+    padding: 3px;
+    border: 1px dashed transparent;
+    border-radius: 13px;
+    transition: border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.epp-task-board-dropzone.is-drop-target {
+    background: rgba(22, 99, 255, 0.06);
+    border-color: rgba(22, 99, 255, 0.48);
+}
+
+.epp-task-board-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    padding: 16px;
+    color: var(--epp-muted-light);
+    text-align: center;
+    border: 1px dashed var(--epp-border);
+    border-radius: 13px;
+    font-size: 11px;
+}
+
+.epp-task-board-card {
+    display: grid;
+    gap: 9px;
+    min-width: 0;
+    padding: 13px;
+    color: var(--epp-text);
+    background: #fff;
+    border: 1px solid var(--epp-border-soft);
+    border-radius: 14px;
+    box-shadow: 0 5px 13px rgba(17, 32, 58, 0.045);
+    cursor: grab;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.epp-task-board-card:hover,
+.epp-task-board-card:focus-visible {
+    outline: 0;
+    border-color: rgba(22, 99, 255, 0.38);
+    box-shadow: 0 9px 19px rgba(17, 32, 58, 0.09);
+    transform: translateY(-1px);
+}
+
+.epp-task-board-card.is-dragging,
+.epp-task-board-card.is-moving {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.epp-task-board-card-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.epp-task-board-due,
+.epp-task-board-project {
+    overflow: hidden;
+    color: var(--epp-muted);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epp-task-board-due.is-overdue {
+    color: var(--epp-danger);
+    font-weight: 700;
+}
+
+.epp-task-board-card > strong {
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.epp-task-board-project {
+    color: var(--epp-primary-dark);
+    font-weight: 700;
+}
+
+.epp-task-board-progress {
+    padding-top: 3px;
+}
+
+.epp-task-board-progress .epp-project-progress-head strong,
+.epp-task-board-progress .epp-project-progress-head span {
+    font-size: 10px;
+}
+
+.epp-task-board-progress .epp-progress-track {
+    height: 6px;
+    margin-top: 7px;
+}
+
+/* The Timesheets view is read-only and groups existing ERPNext work logs without duplicating them. */
+.epp-timesheet-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(170px, 0.4fr)) auto;
+    align-items: end;
+    gap: 14px;
+}
+
+.epp-timesheet-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.epp-timesheet-overview-grid .epp-card {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.epp-timesheet-active-session {
+    display: grid;
+    gap: 7px;
+    color: var(--epp-muted);
+    font-size: 11px;
+}
+
+.epp-timesheet-active-session > strong {
+    overflow-wrap: anywhere;
+    color: var(--epp-text);
+    font-size: 14px;
+}
+
+.epp-timesheet-breakdown {
+    display: grid;
+    gap: 13px;
+}
+
+.epp-timesheet-breakdown-row {
+    display: grid;
+    gap: 7px;
+}
+
+.epp-timesheet-breakdown-row > div:first-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.epp-timesheet-breakdown-row strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--epp-text);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epp-timesheet-breakdown-row span {
+    flex: 0 0 auto;
+    color: var(--epp-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.epp-timesheet-breakdown-row .epp-progress-track {
+    height: 6px;
+    margin-top: 0;
+}
+
+.epp-timesheet-list-card {
+    margin-top: 18px;
+}
+
+.epp-timesheet-list {
+    display: grid;
+    gap: 10px;
+}
+
+.epp-timesheet-record {
+    overflow: hidden;
+    border: 1px solid var(--epp-border-soft);
+    border-radius: 14px;
+}
+
+.epp-timesheet-record summary {
+    display: grid;
+    grid-template-columns: minmax(170px, 1fr) minmax(94px, auto) minmax(58px, auto) minmax(76px, auto);
+    align-items: center;
+    gap: 13px;
+    padding: 13px 15px;
+    color: var(--epp-muted);
+    cursor: pointer;
+    font-size: 11px;
+    list-style: none;
+}
+
+.epp-timesheet-record summary::-webkit-details-marker {
+    display: none;
+}
+
+.epp-timesheet-record[open] summary {
+    background: var(--epp-surface-soft);
+    border-bottom: 1px solid var(--epp-border-soft);
+}
+
+.epp-timesheet-record-main {
+    min-width: 0;
+}
+
+.epp-timesheet-record-main strong,
+.epp-timesheet-record-main span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epp-timesheet-record-main strong {
+    color: var(--epp-text);
+    font-size: 13px;
+}
+
+.epp-timesheet-record-main span {
+    margin-top: 3px;
+    color: var(--epp-muted-light);
+    font-size: 10px;
+}
+
+.epp-timesheet-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 24px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.epp-timesheet-status.is-draft {
+    color: #a55a09;
+    background: var(--epp-warning-soft);
+}
+
+.epp-timesheet-status.is-submitted {
+    color: var(--epp-success);
+    background: var(--epp-success-soft);
+}
+
+.epp-timesheet-session-list {
+    display: grid;
+    gap: 8px;
+    padding: 12px 15px;
+}
+
+.epp-timesheet-session {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(170px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: var(--epp-surface-soft);
+    border-radius: 11px;
+}
+
+.epp-timesheet-session div {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.epp-timesheet-session strong {
+    overflow: hidden;
+    color: var(--epp-text);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epp-timesheet-session span {
+    overflow: hidden;
+    color: var(--epp-muted);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epp-timesheet-session > strong:last-child {
+    color: var(--epp-primary-dark);
+    font-size: 11px;
+}
+
 .epp-task-drawer-backdrop {
     position: fixed;
     z-index: 300;
@@ -1878,12 +2219,20 @@ body:has(.epp-layout) .navbar {
         grid-template-columns: 1fr;
     }
 
+    .epp-timesheet-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
     .epp-workspace-side-stack {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .epp-my-task-filter-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .epp-task-board-filter-grid {
+        grid-template-columns: 1fr;
     }
 
     .epp-my-task-row {
@@ -1926,8 +2275,8 @@ body:has(.epp-layout) .navbar {
         grid-column: 1;
     }
 
-    .epp-header-right {
-        display: none;
+    .epp-mobile-menu-button {
+        margin-bottom: 18px;
     }
 
     .epp-summary-grid {
@@ -1963,6 +2312,8 @@ body:has(.epp-layout) .navbar {
     .epp-project-progress-grid,
     .epp-project-filter-grid,
     .epp-my-task-filter-grid,
+    .epp-task-board-filter-grid,
+    .epp-timesheet-filter-grid,
     .epp-workspace-task-filters {
         grid-template-columns: 1fr;
     }
@@ -1993,10 +2344,6 @@ body:has(.epp-layout) .navbar {
 @media (max-width: 560px) {
     .epp-main {
         padding: 18px 14px 32px;
-    }
-
-    .epp-header h1 {
-        font-size: 23px;
     }
 
     .epp-summary-grid {
@@ -2049,6 +2396,12 @@ body:has(.epp-layout) .navbar {
     .epp-task-drawer {
         width: 100%;
         padding: 18px;
+    }
+
+    .epp-timesheet-record summary,
+    .epp-timesheet-session {
+        grid-template-columns: 1fr;
+        align-items: start;
     }
 
     .epp-task-detail-toolbar,

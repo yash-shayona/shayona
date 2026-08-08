@@ -1,1 +1,52 @@
-{% extends "templates/pages/project_portal/coming_soon.html" %}
+{% extends "templates/pages/project_portal/base.html" %}
+{% from "templates/includes/project_portal/icons.html" import epp_icon %}
+
+{% block portal_content %}
+{# This read-only view reflects the employee's existing ERPNext Timesheets and time logs. #}
+<section id="timesheets-view" class="epp-view">
+    <section class="epp-card epp-project-filter-card">
+        <div class="epp-timesheet-filter-grid">
+            <div class="epp-filter-field">
+                <label for="timesheet-period-filter">Period</label>
+                <select id="timesheet-period-filter">
+                    <option value="Today">Today</option>
+                    <option value="This Week" selected>This Week</option>
+                    <option value="This Month">This Month</option>
+                </select>
+            </div>
+            <div class="epp-filter-field">
+                <label for="timesheet-status-filter">Status</label>
+                <select id="timesheet-status-filter">
+                    <option value="All">All Statuses</option>
+                    <option value="Draft">Draft</option>
+                    <option value="Submitted">Submitted</option>
+                </select>
+            </div>
+            <div class="epp-filter-action">
+                <button id="btn-reset-timesheet-filters" type="button" class="epp-secondary-button">Reset Filters</button>
+            </div>
+        </div>
+        <div class="epp-filter-footer"><span id="timesheets-result-count" class="epp-result-count">0 Timesheets</span></div>
+    </section>
+
+    <div id="timesheets-setup" class="epp-card epp-setup-card hidden"><h3>Portal Setup Required</h3><p id="timesheets-setup-message">Required employee setup is missing.</p></div>
+    <div id="timesheets-loading" class="epp-card epp-projects-loading hidden"><div class="epp-loading-spinner"></div><strong>Loading Timesheets</strong><span>Please wait while your work records are loaded.</span></div>
+    <div id="timesheets-error" class="epp-alert epp-alert-error hidden"></div>
+
+    <section id="timesheet-summary-grid" class="epp-summary-grid epp-timesheet-summary-grid">
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-task">{{ epp_icon("calendar-days", "md") }}</div><span class="epp-summary-label">Today's Hours</span></div><strong id="timesheet-today-hours" class="epp-summary-value">0h</strong><span class="epp-summary-help">Recorded work for today</span></article>
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-project">{{ epp_icon("clock-3", "md") }}</div><span id="timesheet-period-label" class="epp-summary-label">This Week</span></div><strong id="timesheet-period-hours" class="epp-summary-value">0h</strong><span class="epp-summary-help">Work recorded in selected period</span></article>
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-overdue">{{ epp_icon("file-pen-line", "md") }}</div><span class="epp-summary-label">Draft Timesheets</span></div><strong id="timesheet-draft-count" class="epp-summary-value">0</strong><span class="epp-summary-help">Not submitted yet</span></article>
+        <article class="epp-summary-card"><div class="epp-summary-card-top"><div class="epp-summary-icon epp-icon-completed">{{ epp_icon("circle-check", "md") }}</div><span class="epp-summary-label">Submitted</span></div><strong id="timesheet-submitted-count" class="epp-summary-value">0</strong><span class="epp-summary-help">Submitted in selected period</span></article>
+    </section>
+
+    <section class="epp-timesheet-overview-grid">
+        <article class="epp-card"><div class="epp-card-header"><div><span class="epp-section-label">Current Work</span><h2>Active Session</h2></div></div><div id="timesheet-active-session" class="epp-section-empty">No active Timesheet session.</div></article>
+        <article class="epp-card"><div class="epp-card-header"><div><span class="epp-section-label">Projects</span><h2>Time by Project</h2></div></div><div id="timesheet-project-hours" class="epp-timesheet-breakdown"><div class="epp-loading-state">Loading project hours...</div></div></article>
+        <article class="epp-card"><div class="epp-card-header"><div><span class="epp-section-label">Tasks</span><h2>Time by Task</h2></div></div><div id="timesheet-task-hours" class="epp-timesheet-breakdown"><div class="epp-loading-state">Loading task hours...</div></div></article>
+    </section>
+
+    <section class="epp-card epp-timesheet-list-card"><div class="epp-card-header"><div><span class="epp-section-label">Records</span><h2>My Timesheets</h2></div></div><div id="timesheets-list" class="epp-timesheet-list"><div class="epp-loading-state">Loading your Timesheets...</div></div></section>
+    <div id="timesheets-pagination" class="epp-pagination hidden"><button id="btn-timesheet-previous" type="button" class="epp-pagination-button" disabled>{{ epp_icon("arrow-left") }}<span>Previous</span></button><div class="epp-pagination-status"><span>Page</span><strong id="timesheets-current-page">1</strong></div><button id="btn-timesheet-next" type="button" class="epp-pagination-button" disabled><span>Next</span>{{ epp_icon("arrow-right") }}</button></div>
+</section>
+{% endblock %}

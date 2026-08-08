@@ -145,7 +145,9 @@ after_install = "shayona.setup.install.after_install"
 after_uninstall = "shayona.setup.uninstall.after_uninstall"
 
 # before_migrate = "shayona.migrate.before_migrate"
-after_migrate = "shayona.migrate.after_migrate.after_migrate"
+# after_migrate = "shayona.migrate.after_migrate.after_migrate"
+
+# after_sync = "shayona.syncs.after_sync.after_sync"
 
 # Integration Setup
 # ------------------

@@ -47,6 +47,37 @@ const projectPortalState = {
             has_more: false
         }
     },
+    // This is a read-only view of the logged-in employee's standard ERPNext Timesheets.
+    timesheets: {
+        loading: false,
+        requestId: 0,
+        filters: {
+            period: "This Week",
+            status: "All"
+        },
+        page: 1,
+        pageLength: 10,
+        rows: [],
+        summary: null,
+        pagination: {
+            page: 1,
+            page_length: 10,
+            has_previous: false,
+            has_more: false
+        }
+    },
+    // The Task Board is a separate, non-paginated view of the current user's active Task statuses.
+    taskBoard: {
+        loading: false,
+        requestId: 0,
+        searchTimer: null,
+        search: "",
+        statuses: [],
+        rows: [],
+        isTruncated: false,
+        boardLimit: 0,
+        movingTask: ""
+    },
     // This state keeps one selected Project workspace separate from the Projects list.
     workspace: {
         projectName: "",
@@ -76,6 +107,8 @@ const PROJECT_PORTAL_METHODS = {
     get_projects: `${PORTAL_API_BASE}employee_project_portal_get_projects`,
     get_project_workspace: `${PORTAL_API_BASE}employee_project_portal_get_project_workspace`,
     get_my_tasks: `${PORTAL_API_BASE}employee_project_portal_get_my_tasks`,
+    get_my_timesheets: `${PORTAL_API_BASE}employee_project_portal_get_my_timesheets`,
+    get_task_board: `${PORTAL_API_BASE}employee_project_portal_get_task_board`,
     get_task_details: `${PORTAL_API_BASE}employee_project_portal_get_task_details`,
     update_my_task: `${PORTAL_API_BASE}employee_project_portal_update_my_task`
 };
@@ -201,15 +234,6 @@ function eppFormatDate(value) {
     });
 }
 
-function eppFormatHeaderDate(date = new Date()) {
-    return date.toLocaleDateString("en-IN", {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-    });
-}
-
 function eppGetDeadlineParts(value) {
     const date = eppToDate(value);
 
@@ -270,24 +294,6 @@ function eppGetRelativeTime(value) {
     }
 
     return eppFormatDate(value);
-}
-
-function eppGetGreeting(date = new Date()) {
-    const hour = date.getHours();
-
-    if (hour < 12) {
-        return "Good Morning";
-    }
-
-    if (hour < 17) {
-        return "Good Afternoon";
-    }
-
-    if (hour < 20) {
-        return "Good Evening";
-    }
-
-    return "Good Night";
 }
 
 function eppGetInitials(name) {
@@ -465,21 +471,7 @@ function eppRenderHeader() {
     const user = projectPortalState.dashboard?.user || {};
     const employeeName = user.employee_name || "Employee";
     const initials = eppGetInitials(employeeName);
-    const now = new Date();
 
-    eppSetText(
-        "dashboard-greeting",
-        `${eppGetGreeting(now)}, ${employeeName}`
-    );
-
-    eppSetText(
-        "dashboard-date",
-        eppFormatHeaderDate(now)
-    );
-
-    eppSetText("header-user-name", employeeName);
-    eppSetText("header-user-email", user.email || "--");
-    eppSetText("header-user-avatar", initials);
     eppSetText("sidebar-user-name", employeeName);
     eppSetText(
         "sidebar-user-department",
@@ -1432,6 +1424,475 @@ function eppResetMyTaskFilters() {
     eppLoadMyTasks({ resetPage: true });
 }
 
+function eppGetTimesheetFilters() {
+    return {
+        period: eppGetEl("timesheet-period-filter")?.value || "This Week",
+        status: eppGetEl("timesheet-status-filter")?.value || "All"
+    };
+}
+
+function eppSyncTimesheetFilterControls() {
+    const filters = projectPortalState.timesheets.filters;
+
+    [
+        ["timesheet-period-filter", filters.period],
+        ["timesheet-status-filter", filters.status]
+    ].forEach(([id, value]) => {
+        const element = eppGetEl(id);
+
+        if (element) {
+            element.value = value;
+        }
+    });
+}
+
+function eppSetTimesheetsLoading(isLoading) {
+    projectPortalState.timesheets.loading = isLoading;
+    eppGetEl("timesheets-loading")?.classList.toggle("hidden", !isLoading);
+    eppGetEl("timesheet-summary-grid")?.classList.toggle("hidden", isLoading);
+    eppGetEl("timesheets-list")?.closest(".epp-timesheet-list-card")?.classList.toggle("hidden", isLoading);
+}
+
+function eppShowTimesheetsError(message) {
+    const element = eppGetEl("timesheets-error");
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+    element.classList.remove("hidden");
+}
+
+function eppHideTimesheetsError() {
+    const element = eppGetEl("timesheets-error");
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = "";
+    element.classList.add("hidden");
+}
+
+function eppRenderTimesheetsSetup(setupComplete, missingSetup = []) {
+    const setup = eppGetEl("timesheets-setup");
+    const message = eppGetEl("timesheets-setup-message");
+
+    if (!setup) {
+        return;
+    }
+
+    setup.classList.toggle("hidden", setupComplete);
+
+    if (!setupComplete && message) {
+        message.textContent = missingSetup.length
+            ? `Missing setup: ${missingSetup.join(", ")}`
+            : "Required employee setup is missing.";
+    }
+}
+
+function eppRenderTimesheetsPagination() {
+    const timesheets = projectPortalState.timesheets;
+    const pagination = timesheets.pagination || {};
+    const hasPrevious = Boolean(pagination.has_previous);
+    const hasMore = Boolean(pagination.has_more);
+
+    eppGetEl("timesheets-pagination")?.classList.toggle(
+        "hidden",
+        !(hasPrevious || hasMore)
+    );
+    const previousButton = eppGetEl("btn-timesheet-previous");
+    const nextButton = eppGetEl("btn-timesheet-next");
+
+    if (previousButton) {
+        previousButton.disabled = !hasPrevious || timesheets.loading;
+    }
+
+    if (nextButton) {
+        nextButton.disabled = !hasMore || timesheets.loading;
+    }
+
+    eppSetText("timesheets-current-page", pagination.page || 1);
+}
+
+function eppRenderTimesheetBreakdown(id, rows, emptyMessage) {
+    const container = eppGetEl(id);
+
+    if (!container) {
+        return;
+    }
+
+    if (!rows?.length) {
+        container.innerHTML = `<div class="epp-section-empty">${eppEscapeHtml(emptyMessage)}</div>`;
+        return;
+    }
+
+    const highestHours = Math.max(...rows.map((row) => Number(row.hours) || 0), 0);
+
+    container.innerHTML = rows.map((row) => {
+        const hours = Number(row.hours) || 0;
+        const percentage = highestHours ? (hours / highestHours) * 100 : 0;
+
+        return `
+            <div class="epp-timesheet-breakdown-row">
+                <div><strong>${eppEscapeHtml(row.label || row.name || "--")}</strong><span>${eppEscapeHtml(eppFormatHours(hours))}</span></div>
+                <div class="epp-progress-track"><div class="epp-progress-bar" style="width: ${percentage}%"></div></div>
+            </div>
+        `;
+    }).join("");
+}
+
+function eppRenderTimesheetSummary() {
+    const summary = projectPortalState.timesheets.summary || {};
+    const activeSession = summary.active_session;
+
+    eppSetText("timesheet-today-hours", eppFormatHours(summary.today_hours));
+    eppSetText("timesheet-period-hours", eppFormatHours(summary.period_hours));
+    eppSetText("timesheet-period-label", projectPortalState.timesheets.filters.period || "Selected Period");
+    eppSetText("timesheet-draft-count", Number(summary.draft_timesheets) || 0);
+    eppSetText("timesheet-submitted-count", Number(summary.submitted_timesheets) || 0);
+
+    const activeContainer = eppGetEl("timesheet-active-session");
+
+    if (activeContainer) {
+        activeContainer.innerHTML = activeSession ? `
+            <div class="epp-timesheet-active-session">
+                <span class="epp-status-pill is-working">Running</span>
+                <strong>${eppEscapeHtml(activeSession.task_label || activeSession.project_label || "Work Session")}</strong>
+                <span>${eppEscapeHtml(activeSession.project_label || "No Project")}</span>
+                <span>Started ${eppEscapeHtml(eppFormatTime(activeSession.from_time))} · ${eppEscapeHtml(eppFormatHours(activeSession.hours))}</span>
+            </div>
+        ` : "No active Timesheet session.";
+        activeContainer.classList.toggle("epp-section-empty", !activeSession);
+    }
+
+    eppRenderTimesheetBreakdown(
+        "timesheet-project-hours",
+        summary.project_hours,
+        "No project time was recorded in this period."
+    );
+    eppRenderTimesheetBreakdown(
+        "timesheet-task-hours",
+        summary.task_hours,
+        "No task time was recorded in this period."
+    );
+}
+
+function eppRenderTimesheets() {
+    const container = eppGetEl("timesheets-list");
+    const rows = projectPortalState.timesheets.rows || [];
+
+    if (!container) {
+        return;
+    }
+
+    if (!rows.length) {
+        container.innerHTML = `<div class="epp-section-empty">No Timesheets matched the selected filters.</div>`;
+        eppSetText("timesheets-result-count", "0 Timesheets");
+        eppRenderTimesheetsPagination();
+        return;
+    }
+
+    container.innerHTML = rows.map((timesheet) => {
+        const sessions = timesheet.time_logs || [];
+        const sessionLabel = sessions.length === 1 ? "session" : "sessions";
+
+        return `
+            <details class="epp-timesheet-record">
+                <summary>
+                    <div class="epp-timesheet-record-main"><strong>${eppEscapeHtml(eppFormatDate(timesheet.start_date))}</strong><span>${eppEscapeHtml(timesheet.name || "Timesheet")}</span></div>
+                    <span class="epp-timesheet-status ${timesheet.status === "Submitted" ? "is-submitted" : "is-draft"}">${eppEscapeHtml(timesheet.status || "Draft")}</span>
+                    <span>${eppEscapeHtml(eppFormatHours(timesheet.total_hours))}</span>
+                    <span>${sessions.length} ${sessionLabel}</span>
+                </summary>
+                <div class="epp-timesheet-session-list">
+                    ${sessions.length ? sessions.map((session) => `
+                        <article class="epp-timesheet-session">
+                            <div><strong>${eppEscapeHtml(session.task_label || session.activity_type || "Work Session")}</strong><span>${eppEscapeHtml(session.project_label || "No Project")}</span></div>
+                            <div><span>${eppEscapeHtml(session.activity_type || "No Activity Type")}</span><span>${eppEscapeHtml(eppFormatTime(session.from_time))} – ${session.is_running ? "Running" : eppEscapeHtml(eppFormatTime(session.to_time))}</span></div>
+                            <strong>${eppEscapeHtml(eppFormatHours(session.hours))}</strong>
+                        </article>
+                    `).join("") : `<div class="epp-section-empty">No time-log rows were found.</div>`}
+                </div>
+            </details>
+        `;
+    }).join("");
+
+    const count = rows.length;
+    eppSetText(
+        "timesheets-result-count",
+        `${count} ${count === 1 ? "Timesheet" : "Timesheets"} on Page ${projectPortalState.timesheets.pagination.page || 1}`
+    );
+    eppRenderTimesheetsPagination();
+}
+
+async function eppLoadTimesheets({ resetPage = false } = {}) {
+    const timesheets = projectPortalState.timesheets;
+
+    if (resetPage) {
+        timesheets.page = 1;
+    }
+
+    const requestId = ++timesheets.requestId;
+    eppHideTimesheetsError();
+    eppSetTimesheetsLoading(true);
+
+    try {
+        const response = await eppCallPortal("get_my_timesheets", {
+            ...timesheets.filters,
+            page: timesheets.page,
+            page_length: timesheets.pageLength
+        });
+
+        if (requestId !== timesheets.requestId) {
+            return;
+        }
+
+        eppRenderTimesheetsSetup(
+            Boolean(response?.setup_complete),
+            response?.missing_setup || []
+        );
+        timesheets.rows = response?.timesheets || [];
+        timesheets.summary = response?.summary || null;
+        timesheets.pagination = response?.pagination || timesheets.pagination;
+        timesheets.page = Number(response?.pagination?.page) || timesheets.page;
+        eppRenderTimesheetSummary();
+        eppRenderTimesheets();
+
+        if (response?.summary?.is_truncated) {
+            eppShowTimesheetsError("Only the first 500 Timesheets in this period are included in the summary.");
+        }
+    } catch (error) {
+        if (requestId !== timesheets.requestId) {
+            return;
+        }
+
+        const message = eppGetErrorMessage(error, "Unable to load Timesheets.");
+        eppShowTimesheetsError(message);
+        const container = eppGetEl("timesheets-list");
+
+        if (container) {
+            container.innerHTML = `<div class="epp-section-empty">${eppEscapeHtml(message)}</div>`;
+        }
+        console.error("Timesheets API Error:", error);
+    } finally {
+        if (requestId === timesheets.requestId) {
+            eppSetTimesheetsLoading(false);
+            eppRenderTimesheetsPagination();
+        }
+    }
+}
+
+function eppResetTimesheetFilters() {
+    projectPortalState.timesheets.filters = {
+        period: "This Week",
+        status: "All"
+    };
+    eppSyncTimesheetFilterControls();
+    eppLoadTimesheets({ resetPage: true });
+}
+
+function eppSetTaskBoardLoading(isLoading) {
+    projectPortalState.taskBoard.loading = isLoading;
+    eppGetEl("task-board-loading")?.classList.toggle("hidden", !isLoading);
+    eppGetEl("task-board-lanes")?.classList.toggle("hidden", isLoading);
+}
+
+function eppShowTaskBoardError(message) {
+    const element = eppGetEl("task-board-error");
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+    element.classList.remove("hidden");
+}
+
+function eppHideTaskBoardError() {
+    const element = eppGetEl("task-board-error");
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = "";
+    element.classList.add("hidden");
+}
+
+function eppRenderTaskBoardResultCount() {
+    const taskBoard = projectPortalState.taskBoard;
+    const count = taskBoard.rows.length;
+    const label = count === 1 ? "Task" : "Tasks";
+    const suffix = taskBoard.isTruncated ? ` of first ${taskBoard.boardLimit}` : "";
+
+    eppSetText("task-board-result-count", `${count} ${label}${suffix}`);
+}
+
+function eppRenderTaskBoard() {
+    const container = eppGetEl("task-board-lanes");
+    const taskBoard = projectPortalState.taskBoard;
+
+    if (!container) {
+        return;
+    }
+
+    const statuses = taskBoard.statuses || [];
+    const tasks = taskBoard.rows || [];
+
+    if (!statuses.length) {
+        container.innerHTML = `
+            <div class="epp-card epp-section-empty">No Task statuses are available for this board.</div>
+        `;
+        eppRenderTaskBoardResultCount();
+        return;
+    }
+
+    container.innerHTML = statuses.map((status) => {
+        const laneTasks = tasks.filter((task) => task.status === status);
+
+        return `
+            <section class="epp-task-board-lane" data-task-board-status="${eppEscapeHtml(status)}">
+                <header class="epp-task-board-lane-header">
+                    <div>
+                        <span class="epp-task-status-pill ${eppGetTaskStatusClass(status)}">${eppEscapeHtml(status)}</span>
+                    </div>
+                    <strong>${laneTasks.length}</strong>
+                </header>
+                <div class="epp-task-board-dropzone" data-task-board-status="${eppEscapeHtml(status)}">
+                    ${laneTasks.length ? laneTasks.map((task) => {
+                        const percentage = eppClampPercentage(task.progress);
+                        const priority = task.priority || "No Priority";
+                        const dueLabel = eppFormatDate(task.due_date);
+                        const isMoving = taskBoard.movingTask === task.name;
+
+                        return `
+                            <article class="epp-task-board-card${isMoving ? " is-moving" : ""}" draggable="true" tabindex="0" role="button" aria-label="Open ${eppEscapeHtml(task.subject || task.name || "Task")}" data-open-board-task="${eppEscapeHtml(task.name || "")}">
+                                <div class="epp-task-board-card-topline">
+                                    <span class="epp-task-priority ${eppGetMyTaskPriorityClass(task.priority)}">${eppEscapeHtml(priority)}</span>
+                                    <span class="epp-task-board-due${task.is_overdue ? " is-overdue" : ""}">${task.is_overdue ? "Overdue · " : "Due · "}${eppEscapeHtml(dueLabel)}</span>
+                                </div>
+                                <strong>${eppEscapeHtml(task.subject || task.name || "Untitled Task")}</strong>
+                                <span class="epp-task-board-project">${eppEscapeHtml(task.project || "No Project")}</span>
+                                <div class="epp-task-board-progress">
+                                    <div class="epp-project-progress-head"><strong>Progress</strong><span>${percentage}%</span></div>
+                                    <div class="epp-progress-track"><div class="epp-progress-bar" style="width: ${percentage}%"></div></div>
+                                </div>
+                            </article>
+                        `;
+                    }).join("") : `
+                        <div class="epp-task-board-empty">Drop a task here.</div>
+                    `}
+                </div>
+            </section>
+        `;
+    }).join("");
+
+    eppRenderTaskBoardResultCount();
+}
+
+async function eppLoadTaskBoard() {
+    const taskBoard = projectPortalState.taskBoard;
+    const requestId = ++taskBoard.requestId;
+
+    eppHideTaskBoardError();
+    eppSetTaskBoardLoading(true);
+
+    try {
+        const response = await eppCallPortal("get_task_board", {
+            search: taskBoard.search
+        });
+
+        if (requestId !== taskBoard.requestId) {
+            return;
+        }
+
+        taskBoard.statuses = response?.statuses || [];
+        taskBoard.rows = response?.tasks || [];
+        taskBoard.isTruncated = Boolean(response?.is_truncated);
+        taskBoard.boardLimit = Number(response?.board_limit) || 0;
+        taskBoard.movingTask = "";
+        eppRenderTaskBoard();
+    } catch (error) {
+        if (requestId !== taskBoard.requestId) {
+            return;
+        }
+
+        const message = eppGetErrorMessage(error, "Unable to load Task Board.");
+        eppShowTaskBoardError(message);
+        const container = eppGetEl("task-board-lanes");
+
+        if (container) {
+            container.innerHTML = `
+                <div class="epp-card epp-section-empty">${eppEscapeHtml(message)}</div>
+            `;
+        }
+        console.error("Task Board API Error:", error);
+    } finally {
+        if (requestId === taskBoard.requestId) {
+            eppSetTaskBoardLoading(false);
+        }
+    }
+}
+
+function eppScheduleTaskBoardSearch() {
+    const taskBoard = projectPortalState.taskBoard;
+
+    if (taskBoard.searchTimer) {
+        clearTimeout(taskBoard.searchTimer);
+    }
+
+    taskBoard.searchTimer = setTimeout(() => {
+        taskBoard.search = eppGetEl("task-board-search")?.value.trim() || "";
+        eppLoadTaskBoard();
+    }, 350);
+}
+
+function eppResetTaskBoardFilters() {
+    const taskBoard = projectPortalState.taskBoard;
+
+    taskBoard.search = "";
+    const searchElement = eppGetEl("task-board-search");
+
+    if (searchElement) {
+        searchElement.value = "";
+    }
+
+    eppLoadTaskBoard();
+}
+
+function eppClearTaskBoardDropTargets() {
+    document.querySelectorAll(".epp-task-board-dropzone.is-drop-target").forEach((element) => {
+        element.classList.remove("is-drop-target");
+    });
+}
+
+async function eppMoveTaskOnBoard(taskName, status) {
+    const taskBoard = projectPortalState.taskBoard;
+    const task = taskBoard.rows.find((row) => row.name === taskName);
+
+    if (!task || task.status === status || taskBoard.movingTask) {
+        return;
+    }
+
+    taskBoard.movingTask = taskName;
+    eppRenderTaskBoard();
+
+    try {
+        await eppCallPortal("update_my_task", { task: taskName, status });
+        frappe.show_alert({ message: "Task status updated.", indicator: "green" });
+        await eppLoadTaskBoard();
+    } catch (error) {
+        taskBoard.movingTask = "";
+        eppRenderTaskBoard();
+        eppShowTaskBoardError(
+            eppGetErrorMessage(error, "Unable to update this task status.")
+        );
+        console.error("Task Board update API Error:", error);
+    }
+}
+
 function eppSetMyTaskDrawerOpen(isOpen) {
     const drawer = eppGetEl("my-task-drawer");
     const backdrop = eppGetEl("my-task-drawer-backdrop");
@@ -1673,12 +2134,18 @@ async function eppSaveMyTask(form) {
                 indicator: "green"
             });
             eppLoadMyTasks();
+            if (eppGetPortalPage() === "task-board") {
+                eppLoadTaskBoard();
+            }
             return;
         }
 
         eppRenderMyTaskDetails(updatedTask);
         frappe.show_alert({ message: "Task updated.", indicator: "green" });
         eppLoadMyTasks();
+        if (eppGetPortalPage() === "task-board") {
+            eppLoadTaskBoard();
+        }
     } catch (error) {
         myTasks.saving = false;
         form.querySelectorAll("button, input, select, textarea").forEach((element) => {
@@ -2227,6 +2694,28 @@ function eppBindEvents() {
         eppResetMyTaskFilters
     );
 
+    ["timesheet-period-filter", "timesheet-status-filter"].forEach((id) => {
+        eppGetEl(id)?.addEventListener("change", () => {
+            projectPortalState.timesheets.filters = eppGetTimesheetFilters();
+            eppLoadTimesheets({ resetPage: true });
+        });
+    });
+
+    eppGetEl("btn-reset-timesheet-filters")?.addEventListener(
+        "click",
+        eppResetTimesheetFilters
+    );
+
+    eppGetEl("task-board-search")?.addEventListener(
+        "input",
+        eppScheduleTaskBoardSearch
+    );
+
+    eppGetEl("btn-reset-task-board-filters")?.addEventListener(
+        "click",
+        eppResetTaskBoardFilters
+    );
+
     eppGetEl("workspace-task-search")?.addEventListener(
         "input",
         eppScheduleWorkspaceTaskSearch
@@ -2309,6 +2798,34 @@ function eppBindEvents() {
         }
     );
 
+    eppGetEl("btn-timesheet-previous")?.addEventListener(
+        "click",
+        () => {
+            const timesheets = projectPortalState.timesheets;
+
+            if (timesheets.loading || !timesheets.pagination?.has_previous) {
+                return;
+            }
+
+            timesheets.page = Math.max(timesheets.page - 1, 1);
+            eppLoadTimesheets();
+        }
+    );
+
+    eppGetEl("btn-timesheet-next")?.addEventListener(
+        "click",
+        () => {
+            const timesheets = projectPortalState.timesheets;
+
+            if (timesheets.loading || !timesheets.pagination?.has_more) {
+                return;
+            }
+
+            timesheets.page += 1;
+            eppLoadTimesheets();
+        }
+    );
+
     eppGetEl("btn-workspace-task-previous")?.addEventListener(
         "click",
         () => {
@@ -2366,6 +2883,105 @@ function eppBindEvents() {
             }
 
             eppOpenMyTaskDetails(button.dataset.openTask);
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "click",
+        (event) => {
+            const card = event.target.closest("[data-open-board-task]");
+
+            if (!card?.dataset.openBoardTask) {
+                return;
+            }
+
+            eppOpenMyTaskDetails(card.dataset.openBoardTask);
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+
+            const card = event.target.closest("[data-open-board-task]");
+
+            if (!card?.dataset.openBoardTask) {
+                return;
+            }
+
+            event.preventDefault();
+            eppOpenMyTaskDetails(card.dataset.openBoardTask);
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "dragstart",
+        (event) => {
+            const card = event.target.closest("[data-open-board-task]");
+
+            if (!card?.dataset.openBoardTask || !event.dataTransfer) {
+                return;
+            }
+
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", card.dataset.openBoardTask);
+            card.classList.add("is-dragging");
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "dragend",
+        (event) => {
+            event.target.closest("[data-open-board-task]")?.classList.remove("is-dragging");
+            eppClearTaskBoardDropTargets();
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "dragover",
+        (event) => {
+            const dropzone = event.target.closest(".epp-task-board-dropzone");
+
+            if (!dropzone?.dataset.taskBoardStatus) {
+                return;
+            }
+
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = "move";
+            }
+            eppClearTaskBoardDropTargets();
+            dropzone.classList.add("is-drop-target");
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "dragleave",
+        (event) => {
+            const dropzone = event.target.closest(".epp-task-board-dropzone");
+
+            if (dropzone && !dropzone.contains(event.relatedTarget)) {
+                dropzone.classList.remove("is-drop-target");
+            }
+        }
+    );
+
+    eppGetEl("task-board-lanes")?.addEventListener(
+        "drop",
+        (event) => {
+            const dropzone = event.target.closest(".epp-task-board-dropzone");
+
+            if (!dropzone?.dataset.taskBoardStatus) {
+                return;
+            }
+
+            event.preventDefault();
+            const taskName = event.dataTransfer?.getData("text/plain") || "";
+            eppClearTaskBoardDropTargets();
+            eppMoveTaskOnBoard(taskName, dropzone.dataset.taskBoardStatus);
         }
     );
 
@@ -2450,6 +3066,17 @@ async function eppInitializeProjectPortal() {
     if (portalPage === "my-tasks") {
         eppSyncMyTaskFilterControls();
         eppLoadMyTasks();
+        return;
+    }
+
+    if (portalPage === "timesheets") {
+        eppSyncTimesheetFilterControls();
+        eppLoadTimesheets();
+        return;
+    }
+
+    if (portalPage === "task-board") {
+        eppLoadTaskBoard();
         return;
     }
 
