@@ -1,0 +1,70 @@
+{
+  "actions": [],
+  "creation": "2026-08-08 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "schema_version",
+    "manifest_hash",
+    "sidebar_title",
+    "desktop_icon_label",
+    "managed_sidebar_items",
+    "last_sync_on"
+  ],
+  "fields": [
+    {
+      "fieldname": "schema_version",
+      "fieldtype": "Int",
+      "label": "Schema Version",
+      "read_only": 1
+    },
+    {
+      "fieldname": "manifest_hash",
+      "fieldtype": "Data",
+      "label": "Manifest Hash",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sidebar_title",
+      "fieldtype": "Data",
+      "label": "Sidebar Title",
+      "read_only": 1
+    },
+    {
+      "fieldname": "desktop_icon_label",
+      "fieldtype": "Data",
+      "label": "Desktop Icon Label",
+      "read_only": 1
+    },
+    {
+      "fieldname": "managed_sidebar_items",
+      "fieldtype": "Code",
+      "label": "Managed Sidebar Items",
+      "options": "JSON",
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_sync_on",
+      "fieldtype": "Datetime",
+      "label": "Last Sync On",
+      "read_only": 1
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "issingle": 1,
+  "links": [],
+  "modified": "2026-08-08 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Shayona",
+  "name": "Shayona Navigation Sync State",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "read": 1,
+      "role": "System Manager"
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "states": []
+}

@@ -15,15 +15,15 @@ required_apps = [
 ]
 
 # Each item in the list will be shown as an app in the apps page
-add_to_apps_screen = [
-    {
-        "name": "shayona",
-        "logo": "/assets/shayona/images/brand.png",
-        "title": "Shayona",
-        "route": "/desk/shayona",
-        # "has_permission": "shayona.api.permission.has_app_permission"
-    }
-]
+# add_to_apps_screen = [
+#     {
+#         "name": "shayona",
+#         "logo": "/assets/shayona/images/brand.png",
+#         "title": "Shayona",
+#         "route": "/desk/shayona",
+#         # "has_permission": "shayona.api.permission.has_app_permission"
+#     }
+# ]
 
 fixtures = [
     {"dt": "Custom Field", "filters": [["module", "in", ["Shayona"]]]},
@@ -143,6 +143,9 @@ after_install = "shayona.setup.install.after_install"
 
 # before_uninstall = "shayona.uninstall.before_uninstall"
 after_uninstall = "shayona.setup.uninstall.after_uninstall"
+
+# before_migrate = "shayona.migrate.before_migrate"
+after_migrate = "shayona.migrate.after_migrate.after_migrate"
 
 # Integration Setup
 # ------------------
