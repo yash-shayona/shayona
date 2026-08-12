@@ -196,6 +196,26 @@ body:has(.epp-layout) .navbar {
     box-shadow: 0 7px 16px rgba(22, 99, 255, 0.2);
 }
 
+.epp-notification-nav-button {
+    position: relative;
+}
+
+.epp-notification-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: auto;
+    color: #fff;
+    background: var(--epp-danger);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+}
+
 .epp-sidebar-footer {
     margin-top: auto;
     padding-top: 18px;
@@ -849,27 +869,8 @@ body:has(.epp-layout) .navbar {
     flex: 0 0 auto;
 }
 
-.epp-result-count {
-    display: inline-flex;
-    align-items: center;
-    min-height: 38px;
-    padding: 8px 12px;
-    color: var(--epp-primary-dark);
-    background: var(--epp-primary-soft);
-    border: 1px solid rgba(22, 99, 255, 0.14);
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-}
-
 .epp-project-filter-card {
     margin-bottom: 18px;
-}
-
-.epp-filter-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 14px;
 }
 
 .epp-project-filter-grid {
@@ -1002,7 +1003,12 @@ body:has(.epp-layout) .navbar {
     }
 
     .epp-list-view .epp-pagination {
-        margin: 18px 0 0;
+        margin: 12px 0 0;
+    }
+
+    .epp-list-view .epp-project-filter-card {
+        padding: 16px 20px;
+        margin-bottom: 12px;
     }
 
     .epp-task-board-view {
@@ -1013,6 +1019,8 @@ body:has(.epp-layout) .navbar {
     }
 
     .epp-task-board-scroll-panel {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
         min-height: 0;
         overflow: hidden;
     }
@@ -1663,10 +1671,28 @@ body:has(.epp-layout) .navbar {
     font-weight: 700;
 }
 
-.epp-task-board-card > strong {
+.epp-task-board-open {
+    padding: 0;
     overflow-wrap: anywhere;
+    color: inherit;
+    font: inherit;
     font-size: 13px;
+    font-weight: 700;
     line-height: 1.45;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.epp-task-board-open:hover,
+.epp-task-board-open:focus-visible {
+    color: var(--epp-primary);
+    outline: 0;
+}
+
+.epp-task-board-open:focus-visible {
+    text-decoration: underline;
 }
 
 .epp-task-board-project {
@@ -1686,6 +1712,18 @@ body:has(.epp-layout) .navbar {
 .epp-task-board-progress .epp-progress-track {
     height: 6px;
     margin-top: 7px;
+}
+
+.epp-task-board-work-action {
+    display: flex;
+    padding-top: 2px;
+}
+
+.epp-task-board-work-button {
+    width: 100%;
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 11px;
 }
 
 /* The Timesheets view is read-only and groups existing ERPNext work logs without duplicating them. */
@@ -1944,6 +1982,150 @@ body:has(.epp-layout) .navbar {
     padding-top: 20px;
 }
 
+/* Portal alerts are a separate lightweight drawer, not another content page. */
+.epp-notification-drawer-backdrop {
+    position: fixed;
+    z-index: 300;
+    inset: 0;
+    background: rgba(17, 32, 58, 0.34);
+}
+
+.epp-notification-drawer {
+    position: fixed;
+    z-index: 301;
+    top: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(410px, 100%);
+    height: 100vh;
+    padding: 24px;
+    overflow-y: auto;
+    color: var(--epp-text);
+    background: #fff;
+    box-shadow: -18px 0 45px rgba(17, 32, 58, 0.18);
+    transform: translateX(105%);
+    transition: transform 0.2s ease;
+}
+
+.epp-notification-drawer.is-open {
+    transform: translateX(0);
+}
+
+.epp-notification-drawer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--epp-border-soft);
+}
+
+.epp-notification-drawer-header h2 {
+    margin: 5px 0 0;
+    font-size: 21px;
+}
+
+.epp-notification-drawer-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 15px 0;
+}
+
+.epp-notification-drawer-actions .epp-secondary-button {
+    min-height: 34px;
+    padding: 7px 12px;
+    font-size: 11px;
+}
+
+.epp-notification-list {
+    display: grid;
+    gap: 10px;
+}
+
+.epp-notification-item {
+    padding: 14px;
+    background: var(--epp-primary-soft);
+    border: 1px solid rgba(22, 99, 255, 0.14);
+    border-radius: 14px;
+}
+
+.epp-notification-item.is-read {
+    background: #fff;
+    border-color: var(--epp-border-soft);
+}
+
+.epp-notification-item-header,
+.epp-notification-item-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+}
+
+.epp-notification-item-header strong {
+    min-width: 0;
+    color: var(--epp-text);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.epp-notification-unread {
+    flex: 0 0 auto;
+    padding: 3px 7px;
+    color: var(--epp-primary-dark);
+    background: rgba(22, 99, 255, 0.13);
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.epp-notification-item p {
+    margin: 8px 0;
+    color: var(--epp-muted);
+    font-size: 11px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.epp-notification-item-meta {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    color: var(--epp-muted-light);
+    font-size: 10px;
+}
+
+.epp-notification-item-meta a {
+    margin-left: auto;
+    color: var(--epp-primary-dark);
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.epp-notification-item-meta a:hover,
+.epp-notification-item-meta a:focus-visible {
+    color: var(--epp-primary);
+    text-decoration: underline;
+}
+
+.epp-notification-empty {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    min-height: 170px;
+    padding: 30px 18px;
+    color: var(--epp-muted);
+    text-align: center;
+    border: 1px dashed var(--epp-border);
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.epp-notification-empty strong {
+    color: var(--epp-text);
+    font-size: 14px;
+}
+
 .epp-task-detail-pills {
     display: flex;
     flex-wrap: wrap;
@@ -1960,7 +2142,8 @@ body:has(.epp-layout) .navbar {
     font-size: 11px;
 }
 
-.epp-task-detail-toolbar .epp-secondary-button {
+.epp-task-detail-toolbar .epp-secondary-button,
+.epp-task-detail-toolbar .epp-primary-button {
     flex: 0 0 auto;
     min-height: 34px;
     padding: 7px 12px;
@@ -2001,6 +2184,110 @@ body:has(.epp-layout) .navbar {
     margin-top: 5px;
     overflow-wrap: anywhere;
     font-size: 12px;
+}
+
+.epp-task-update-section {
+    display: grid;
+    gap: 13px;
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--epp-border-soft);
+}
+
+.epp-task-update-section-header,
+.epp-task-update-entry-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.epp-task-update-section-header h3 {
+    margin: 5px 0 0;
+    font-size: 16px;
+}
+
+.epp-task-update-section-header > span,
+.epp-task-update-entry-header time,
+.epp-task-update-file-help,
+.epp-task-attachments-empty {
+    color: var(--epp-muted);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.epp-task-update-form,
+.epp-task-update-timeline,
+.epp-task-attachments {
+    display: grid;
+    gap: 11px;
+}
+
+.epp-task-update-entry,
+.epp-task-update-empty {
+    padding: 13px;
+    background: var(--epp-surface-soft);
+    border: 1px solid var(--epp-border-soft);
+    border-radius: 13px;
+}
+
+.epp-task-update-entry-header strong {
+    overflow-wrap: anywhere;
+    font-size: 12px;
+}
+
+.epp-task-update-entry-header time {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+.epp-task-update-entry p,
+.epp-task-update-empty {
+    margin: 9px 0 0;
+    color: var(--epp-text);
+    font-size: 12px;
+    line-height: 1.55;
+    white-space: pre-line;
+}
+
+.epp-task-update-empty {
+    margin: 0;
+    color: var(--epp-muted);
+}
+
+.epp-task-attachment {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    color: var(--epp-primary-dark);
+    background: var(--epp-primary-soft);
+    border: 1px solid rgba(22, 99, 255, 0.15);
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.epp-task-attachment:hover,
+.epp-task-attachment:focus-visible {
+    color: var(--epp-primary);
+    border-color: rgba(22, 99, 255, 0.35);
+    outline: 0;
+    text-decoration: none;
+}
+
+.epp-task-attachment span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.epp-task-attachment small {
+    flex: 0 0 auto;
+    color: var(--epp-muted);
+    font-size: 10px;
+    font-weight: 600;
 }
 
 .epp-task-edit-form {
@@ -2092,22 +2379,76 @@ body:has(.epp-layout) .navbar {
 .epp-pagination {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 14px;
-    margin-top: 18px;
+    justify-content: flex-start;
+    gap: 22px;
+    width: 100%;
+    min-height: 56px;
+    padding: 10px 4px;
+    margin-top: 12px;
+    border-top: 1px solid var(--epp-border-soft);
 }
 
-.epp-pagination-status {
+.epp-pagination-summary {
+    display: flex;
+    align-items: center;
+    min-width: 170px;
+    color: var(--epp-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.epp-pagination-controls,
+.epp-pagination-page-numbers {
     display: flex;
     align-items: center;
     gap: 7px;
-    color: var(--epp-muted);
+}
+
+.epp-pagination-controls {
+    flex-wrap: wrap;
+}
+
+.epp-pagination .epp-pagination-button,
+.epp-pagination-page {
+    min-height: 36px;
+    padding: 7px 11px;
+    border-radius: 10px;
     font-size: 11px;
 }
 
-.epp-pagination-status strong {
-    color: var(--epp-text);
-    font-size: 13px;
+.epp-pagination-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    color: var(--epp-primary-dark);
+    background: #fff;
+    border: 1px solid rgba(22, 99, 255, 0.2);
+    cursor: pointer;
+}
+
+.epp-pagination-page:hover:not(:disabled) {
+    background: var(--epp-primary-soft);
+    border-color: rgba(22, 99, 255, 0.32);
+}
+
+.epp-pagination-page.is-active {
+    color: #fff;
+    background: var(--epp-primary);
+    border-color: var(--epp-primary);
+}
+
+.epp-pagination-page:disabled {
+    cursor: not-allowed;
+}
+
+.epp-pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    color: var(--epp-muted);
+    font-size: 14px;
 }
 
 .epp-loading-state,
@@ -2398,6 +2739,11 @@ body:has(.epp-layout) .navbar {
         padding: 18px;
     }
 
+    .epp-notification-drawer {
+        width: 100%;
+        padding: 18px;
+    }
+
     .epp-timesheet-record summary,
     .epp-timesheet-session {
         grid-template-columns: 1fr;
@@ -2417,19 +2763,17 @@ body:has(.epp-layout) .navbar {
     }
 
     .epp-pagination {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .epp-pagination-controls {
         width: 100%;
     }
 
-    .epp-pagination-status {
-        grid-column: 1 / -1;
-        grid-row: 1;
-        justify-content: center;
-    }
-
-    .epp-pagination-button {
-        width: 100%;
+    .epp-pagination-summary {
+        min-width: 0;
     }
 }
 

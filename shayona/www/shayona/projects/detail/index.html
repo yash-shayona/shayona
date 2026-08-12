@@ -30,13 +30,13 @@
         </section>
 
         <section class="epp-card epp-workspace-tasks-card">
-            <div class="epp-card-header epp-workspace-tasks-header"><div><span class="epp-section-label">Tasks</span><h2>Project Tasks</h2></div><span id="workspace-task-result-count" class="epp-result-count">0 Tasks</span></div>
+            <div class="epp-card-header epp-workspace-tasks-header"><div><span class="epp-section-label">Tasks</span><h2>Project Tasks</h2></div></div>
             <div class="epp-workspace-task-filters">
                 <div class="epp-filter-field epp-filter-search"><label for="workspace-task-search">Search Tasks</label><div class="epp-search-control"><span class="epp-search-icon" aria-hidden="true">{{ epp_icon("search") }}</span><input id="workspace-task-search" type="search" placeholder="Search task name or subject..." autocomplete="off"></div></div>
                 <div class="epp-filter-field"><label for="workspace-task-status-filter">Status</label><select id="workspace-task-status-filter"><option value="All">All Statuses</option><option value="Open">Open</option><option value="Working">Working</option><option value="Pending Review">Pending Review</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select></div>
             </div>
             <div id="workspace-task-list" class="epp-workspace-task-list"><div class="epp-section-empty">Loading permitted tasks...</div></div>
-            <div id="workspace-task-pagination" class="epp-pagination hidden"><button id="btn-workspace-task-previous" type="button" class="epp-pagination-button" disabled>{{ epp_icon("arrow-left") }}<span>Previous</span></button><div class="epp-pagination-status"><span>Page</span><strong id="workspace-task-current-page">1</strong></div><button id="btn-workspace-task-next" type="button" class="epp-pagination-button" disabled><span>Next</span>{{ epp_icon("arrow-right") }}</button></div>
+            <nav id="workspace-task-pagination" class="epp-pagination hidden" aria-label="Project Tasks pagination"><span id="workspace-task-pagination-summary" class="epp-pagination-summary">0 Tasks</span><div class="epp-pagination-controls"><button type="button" class="epp-pagination-button" data-pagination-page="first">First</button><button type="button" class="epp-pagination-button" data-pagination-page="previous">{{ epp_icon("arrow-left") }}<span>Previous</span></button><div id="workspace-task-page-numbers" class="epp-pagination-page-numbers"></div><button type="button" class="epp-pagination-button" data-pagination-page="next"><span>Next</span>{{ epp_icon("arrow-right") }}</button><button type="button" class="epp-pagination-button" data-pagination-page="last">Last</button></div></nav>
         </section>
     </div>
 </section>

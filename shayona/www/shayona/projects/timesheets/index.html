@@ -26,7 +26,6 @@
                 <button id="btn-reset-timesheet-filters" type="button" class="epp-secondary-button">Reset Filters</button>
             </div>
         </div>
-        <div class="epp-filter-footer"><span id="timesheets-result-count" class="epp-result-count">0 Timesheets</span></div>
     </section>
 
     <div id="timesheets-setup" class="epp-card epp-setup-card hidden"><h3>Portal Setup Required</h3><p id="timesheets-setup-message">Required employee setup is missing.</p></div>
@@ -47,6 +46,6 @@
     </section>
 
     <section class="epp-card epp-timesheet-list-card"><div class="epp-card-header"><div><span class="epp-section-label">Records</span><h2>My Timesheets</h2></div></div><div id="timesheets-list" class="epp-timesheet-list"><div class="epp-loading-state">Loading your Timesheets...</div></div></section>
-    <div id="timesheets-pagination" class="epp-pagination hidden"><button id="btn-timesheet-previous" type="button" class="epp-pagination-button" disabled>{{ epp_icon("arrow-left") }}<span>Previous</span></button><div class="epp-pagination-status"><span>Page</span><strong id="timesheets-current-page">1</strong></div><button id="btn-timesheet-next" type="button" class="epp-pagination-button" disabled><span>Next</span>{{ epp_icon("arrow-right") }}</button></div>
+    <nav id="timesheets-pagination" class="epp-pagination hidden" aria-label="Timesheets pagination"><span id="timesheets-pagination-summary" class="epp-pagination-summary">0 Timesheets</span><div class="epp-pagination-controls"><button type="button" class="epp-pagination-button" data-pagination-page="first">First</button><button type="button" class="epp-pagination-button" data-pagination-page="previous">{{ epp_icon("arrow-left") }}<span>Previous</span></button><div id="timesheets-page-numbers" class="epp-pagination-page-numbers"></div><button type="button" class="epp-pagination-button" data-pagination-page="next"><span>Next</span>{{ epp_icon("arrow-right") }}</button><button type="button" class="epp-pagination-button" data-pagination-page="last">Last</button></div></nav>
 </section>
 {% endblock %}

@@ -35,6 +35,11 @@
             <span class="epp-nav-icon">{{ epp_icon("clock-3") }}</span>
             <span>Timesheets</span>
         </a>
+        <button id="btn-project-portal-notifications" type="button" class="epp-nav-item epp-notification-nav-button" aria-expanded="false" aria-controls="project-portal-notification-drawer">
+            <span class="epp-nav-icon">{{ epp_icon("bell") }}</span>
+            <span>Notifications</span>
+            <span id="project-portal-notification-count" class="epp-notification-badge hidden" aria-live="polite"></span>
+        </button>
     </nav>
 
     <div class="epp-sidebar-footer">

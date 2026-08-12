@@ -17,12 +17,14 @@
                 <button id="btn-reset-task-board-filters" type="button" class="epp-secondary-button">Reset Search</button>
             </div>
         </div>
-        <div class="epp-filter-footer"><span id="task-board-result-count" class="epp-result-count">0 Tasks</span></div>
     </section>
 
     <div class="epp-task-board-scroll-panel">
-        <div id="task-board-loading" class="epp-card epp-projects-loading hidden"><div class="epp-loading-spinner"></div><strong>Loading Task Board</strong><span>Please wait while your assigned tasks are loaded.</span></div>
-        <div id="task-board-error" class="epp-alert epp-alert-error hidden"></div>
+        <div class="epp-task-board-status-panel">
+            <div id="task-board-loading" class="epp-card epp-projects-loading hidden"><div class="epp-loading-spinner"></div><strong>Loading Task Board</strong><span>Please wait while your assigned tasks are loaded.</span></div>
+            <div id="task-board-error" class="epp-alert epp-alert-error hidden"></div>
+            <div id="task-board-limit-notice" class="epp-alert epp-alert-info hidden"></div>
+        </div>
         <section id="task-board-lanes" class="epp-task-board-lanes" aria-live="polite"><div class="epp-card epp-section-empty">Loading your assigned tasks...</div></section>
     </div>
 </section>

@@ -1,0 +1,179 @@
+{% extends "templates/web.html" %}
+
+{% block title %}{{ _("Quick Sales Order") }}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+<div class="qso-app" id="quick-sales-order-app">
+	<header class="qso-header">
+		<a class="qso-brand" href="/shayona/quick-sales-order" aria-label="Quick Sales Order">
+			<span class="qso-brand-icon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" role="img"><path d="M13.2 2 5 13h6l-.8 9L19 10h-6.2l.4-8Z"/></svg>
+			</span>
+			<span>
+				<strong>{{ _("Quick Sales Order") }}</strong>
+				<small>{{ _("Create orders faster") }}</small>
+			</span>
+		</a>
+
+		<div class="qso-header-actions">
+			<a class="qso-help-link" href="/app/sales-order" target="_blank" rel="noopener">
+				{{ _("Sales Orders") }}
+			</a>
+			<div class="qso-user">
+				<span class="qso-avatar" aria-hidden="true">{{ (user_fullname or frappe.session.user)[:1] | upper }}</span>
+				<span>{{ user_fullname or frappe.session.user }}</span>
+			</div>
+		</div>
+	</header>
+
+	<main class="qso-shell">
+		<div class="qso-page-heading">
+			<div>
+				<p class="qso-eyebrow">{{ _("SELLING") }}</p>
+				<h1>{{ _("New Sales Order") }}</h1>
+				<p>{{ _("Add the essential details. ERPNext will handle the remaining Sales Order flow.") }}</p>
+			</div>
+			<span class="qso-status"><span></span>{{ _("Not Saved") }}</span>
+		</div>
+
+		<div id="qso-alert" class="qso-alert" role="status" aria-live="polite" hidden></div>
+
+		<div class="qso-layout">
+			<section class="qso-main-column">
+				<article class="qso-card">
+					<div class="qso-card-heading">
+						<span class="qso-section-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-13ZM8 8h8M8 12h8M8 16h5"/></svg>
+						</span>
+						<div>
+							<h2>{{ _("Order Details") }}</h2>
+							<p>{{ _("Select the customer and order date") }}</p>
+						</div>
+					</div>
+
+					<div class="qso-order-fields">
+						<div class="qso-field qso-autocomplete" data-autocomplete="customer">
+							<label for="qso-customer">{{ _("Customer") }} <span>*</span></label>
+							<div class="qso-input-wrap">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+								<input id="qso-customer" type="text" autocomplete="off" placeholder="{{ _("Search customer...") }}" aria-autocomplete="list" aria-expanded="false">
+							</div>
+							<div id="qso-customer-results" class="qso-results" role="listbox" hidden></div>
+						</div>
+
+						<div class="qso-field">
+							<label for="qso-order-date">{{ _("Order Date") }} <span>*</span></label>
+							<div class="qso-input-wrap">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18M7 3v4M17 3v4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+								<input id="qso-order-date" type="date" value="{{ transaction_date }}">
+							</div>
+						</div>
+					</div>
+				</article>
+
+				<article class="qso-card qso-items-card">
+					<div class="qso-card-heading qso-items-heading">
+						<div class="qso-heading-group">
+							<span class="qso-section-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/></svg>
+							</span>
+							<div>
+								<h2>{{ _("Items") }}</h2>
+								<p>{{ _("Add items, quantity and rate") }}</p>
+							</div>
+						</div>
+						<span id="qso-item-count-badge" class="qso-count-badge">0 {{ _("Items") }}</span>
+					</div>
+
+					<div class="qso-entry-panel">
+						<div class="qso-field qso-item-field qso-autocomplete" data-autocomplete="item">
+							<label for="qso-item-code">{{ _("Item") }} <span>*</span></label>
+							<div class="qso-input-wrap">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 16-4 4-4-4M17 20V9M3 4h10v5H3zM3 13h7v5H3z"/></svg>
+								<input id="qso-item-code" type="text" autocomplete="off" placeholder="{{ _("Search item code or name...") }}" aria-autocomplete="list" aria-expanded="false">
+							</div>
+							<div id="qso-item-results" class="qso-results" role="listbox" hidden></div>
+							<small id="qso-selected-item-name" class="qso-field-help"></small>
+						</div>
+
+						<div class="qso-field">
+							<label for="qso-qty">{{ _("Quantity") }} <span>*</span></label>
+							<input id="qso-qty" type="number" min="0.001" step="any" value="1" inputmode="decimal">
+						</div>
+
+						<div class="qso-field">
+							<label for="qso-rate">{{ _("Rate") }}</label>
+							<div class="qso-money-input">
+								<span id="qso-rate-currency">₹</span>
+								<input id="qso-rate" type="number" min="0" step="any" value="0" inputmode="decimal">
+							</div>
+						</div>
+
+						<button id="qso-add-item" class="qso-primary-button qso-add-button" type="button">
+							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+							<span>{{ _("Add Item") }}</span>
+						</button>
+					</div>
+
+					<div id="qso-items-empty" class="qso-empty-state">
+						<span aria-hidden="true">
+							<svg viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/></svg>
+						</span>
+						<strong>{{ _("No items added yet") }}</strong>
+						<p>{{ _("Search an item above and add it to this order.") }}</p>
+					</div>
+
+					<div id="qso-items-list" class="qso-items-list" hidden></div>
+
+					<div class="qso-items-footer">
+						<button id="qso-clear-items" class="qso-text-button qso-danger-text" type="button" hidden>
+							{{ _("Clear All Items") }}
+						</button>
+					</div>
+				</article>
+			</section>
+
+			<aside class="qso-summary-card">
+				<div class="qso-card-heading">
+					<span class="qso-section-icon qso-section-icon-purple" aria-hidden="true">
+						<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+					</span>
+					<div>
+						<h2>{{ _("Order Summary") }}</h2>
+						<p>{{ _("Review before saving") }}</p>
+					</div>
+				</div>
+
+				<div class="qso-summary-lines">
+					<div><span>{{ _("Total Items") }}</span><strong id="qso-total-items">0</strong></div>
+					<div><span>{{ _("Total Quantity") }}</span><strong id="qso-total-qty">0</strong></div>
+					<div><span>{{ _("Sub Total") }}</span><strong id="qso-subtotal">₹ 0.00</strong></div>
+					<div><span>{{ _("Taxes and Charges") }}</span><em>{{ _("As per Sales Order") }}</em></div>
+				</div>
+
+				<div class="qso-grand-total">
+					<span>{{ _("Estimated Total") }}</span>
+					<strong id="qso-grand-total">₹ 0.00</strong>
+				</div>
+
+				<button id="qso-save-order" class="qso-primary-button qso-save-button" type="button">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2ZM17 21v-8H7v8M7 3v5h8"/></svg>
+					<span>{{ _("Save Sales Order") }}</span>
+				</button>
+
+				<p class="qso-summary-note">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 16v-4M12 8h.01"/></svg>
+					{{ _("Actual taxes and totals are calculated by ERPNext when the order is saved.") }}
+				</p>
+			</aside>
+		</div>
+
+		<footer class="qso-info-bar">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM12 16v-4M12 8h.01"/></svg>
+			<span>{{ _("Need advanced fields, taxes or terms? Save here, then continue editing in the standard Sales Order form.") }}</span>
+		</footer>
+	</main>
+</div>
+{% endblock %}

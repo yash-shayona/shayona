@@ -5,7 +5,7 @@
 
 {% block page_content %}
 <div class="swp-page">
-    <div class="swp-header">
+    <!-- <div class="swp-header">
         <div class="swp-header-copy">
             <h1 id="greeting-title">Good Morning</h1>
         </div>
@@ -23,7 +23,7 @@
                 <span id="current-time">--</span>
             </span>
         </div>
-    </div>
+    </div> -->
 
     <div id="setup-card" class="swp-card swp-setup-card hidden">
         <h3>Portal Setup Required</h3>
@@ -263,11 +263,14 @@
                             Project (Optional)
                         </label>
 
-                        <select id="project">
-                            <option value="">
-                                Select Project
-                            </option>
-                        </select>
+                        <div class="swp-link-control">
+                            <input id="project" type="hidden">
+
+                            <input id="project-search" type="text" placeholder="Search Project..." autocomplete="off"
+                                aria-autocomplete="list" aria-expanded="false">
+
+                            <div id="project-results" class="swp-link-results" role="listbox" hidden></div>
+                        </div>
                     </div>
 
                     <div>
@@ -275,11 +278,14 @@
                             Task (Optional)
                         </label>
 
-                        <select id="task">
-                            <option value="">
-                                Select Task
-                            </option>
-                        </select>
+                        <div class="swp-link-control">
+                            <input id="task" type="hidden">
+
+                            <input id="task-search" type="text" placeholder="Search Task..." autocomplete="off"
+                                aria-autocomplete="list" aria-expanded="false">
+
+                            <div id="task-results" class="swp-link-results" role="listbox" hidden></div>
+                        </div>
                     </div>
 
                     <div>
@@ -287,11 +293,14 @@
                             Activity Type
                         </label>
 
-                        <select id="activity-type">
-                            <option value="">
-                                Select Activity
-                            </option>
-                        </select>
+                        <div class="swp-link-control">
+                            <input id="activity-type" type="hidden">
+
+                            <input id="activity-type-search" type="text" placeholder="Search Activity Type..."
+                                autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+
+                            <div id="activity-type-results" class="swp-link-results" role="listbox" hidden></div>
+                        </div>
                     </div>
 
                     <div>
@@ -376,11 +385,14 @@
                         Project (Optional)
                     </label>
 
-                    <select id="create-task-project">
-                        <option value="">
-                            Select Project
-                        </option>
-                    </select>
+                    <div class="swp-link-control">
+                        <input id="create-task-project" type="hidden">
+
+                        <input id="create-task-project-search" type="text" placeholder="Search Project..."
+                            autocomplete="off" aria-autocomplete="list" aria-expanded="false">
+
+                        <div id="create-task-project-results" class="swp-link-results" role="listbox" hidden></div>
+                    </div>
                 </div>
 
                 <div class="swp-modal-field">
@@ -388,11 +400,14 @@
                         Task Type (Optional)
                     </label>
 
-                    <select id="create-task-type">
-                        <option value="">
-                            Select Task Type
-                        </option>
-                    </select>
+                    <div class="swp-link-control">
+                        <input id="create-task-type" type="hidden">
+
+                        <input id="create-task-type-search" type="text" placeholder="Search Task Type..." autocomplete="off"
+                            aria-autocomplete="list" aria-expanded="false">
+
+                        <div id="create-task-type-results" class="swp-link-results" role="listbox" hidden></div>
+                    </div>
                 </div>
             </div>
 

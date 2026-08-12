@@ -38,9 +38,6 @@
                 <button id="btn-reset-project-filters" type="button" class="epp-secondary-button">Reset Filters</button>
             </div>
         </div>
-        <div class="epp-filter-footer">
-            <span id="projects-result-count" class="epp-result-count">0 Projects</span>
-        </div>
     </div>
 
     <div class="epp-list-scroll-panel">
@@ -57,14 +54,15 @@
         </div>
     </div>
 
-    <div id="projects-pagination" class="epp-pagination hidden">
-        <button id="btn-project-previous" type="button" class="epp-pagination-button" disabled>
-            {{ epp_icon("arrow-left") }}<span>Previous</span>
-        </button>
-        <div class="epp-pagination-status"><span>Page</span><strong id="projects-current-page">1</strong></div>
-        <button id="btn-project-next" type="button" class="epp-pagination-button" disabled>
-            <span>Next</span>{{ epp_icon("arrow-right") }}
-        </button>
-    </div>
+    <nav id="projects-pagination" class="epp-pagination hidden" aria-label="Projects pagination">
+        <span id="projects-pagination-summary" class="epp-pagination-summary">0 Projects</span>
+        <div class="epp-pagination-controls">
+            <button type="button" class="epp-pagination-button" data-pagination-page="first">First</button>
+            <button type="button" class="epp-pagination-button" data-pagination-page="previous">{{ epp_icon("arrow-left") }}<span>Previous</span></button>
+            <div id="projects-page-numbers" class="epp-pagination-page-numbers"></div>
+            <button type="button" class="epp-pagination-button" data-pagination-page="next"><span>Next</span>{{ epp_icon("arrow-right") }}</button>
+            <button type="button" class="epp-pagination-button" data-pagination-page="last">Last</button>
+        </div>
+    </nav>
 </section>
 {% endblock %}

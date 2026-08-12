@@ -19,7 +19,9 @@ const projectPortalState = {
             page: 1,
             page_length: 10,
             has_previous: false,
-            has_more: false
+            has_more: false,
+            total_records: 0,
+            total_pages: 0
         }
     },
     // This state keeps My Tasks filters and the currently opened detail drawer independent.
@@ -30,6 +32,8 @@ const projectPortalState = {
         detail: null,
         editing: false,
         saving: false,
+        workingTask: "",
+        updating: false,
         searchTimer: null,
         filters: {
             search: "",
@@ -44,7 +48,9 @@ const projectPortalState = {
             page: 1,
             page_length: 10,
             has_previous: false,
-            has_more: false
+            has_more: false,
+            total_records: 0,
+            total_pages: 0
         }
     },
     // This is a read-only view of the logged-in employee's standard ERPNext Timesheets.
@@ -63,7 +69,9 @@ const projectPortalState = {
             page: 1,
             page_length: 10,
             has_previous: false,
-            has_more: false
+            has_more: false,
+            total_records: 0,
+            total_pages: 0
         }
     },
     // The Task Board is a separate, non-paginated view of the current user's active Task statuses.
@@ -76,7 +84,16 @@ const projectPortalState = {
         rows: [],
         isTruncated: false,
         boardLimit: 0,
-        movingTask: ""
+        movingTask: "",
+        workingTask: "",
+        activeWork: null
+    },
+    // Portal alerts are intentionally separate from Frappe Desk's global notification list.
+    notifications: {
+        loading: false,
+        requestId: 0,
+        rows: [],
+        unreadCount: 0
     },
     // This state keeps one selected Project workspace separate from the Projects list.
     workspace: {
@@ -95,7 +112,9 @@ const projectPortalState = {
             page: 1,
             page_length: 10,
             has_previous: false,
-            has_more: false
+            has_more: false,
+            total_records: 0,
+            total_pages: 0
         }
     }
 };
@@ -110,7 +129,13 @@ const PROJECT_PORTAL_METHODS = {
     get_my_timesheets: `${PORTAL_API_BASE}employee_project_portal_get_my_timesheets`,
     get_task_board: `${PORTAL_API_BASE}employee_project_portal_get_task_board`,
     get_task_details: `${PORTAL_API_BASE}employee_project_portal_get_task_details`,
-    update_my_task: `${PORTAL_API_BASE}employee_project_portal_update_my_task`
+    update_my_task: `${PORTAL_API_BASE}employee_project_portal_update_my_task`,
+    start_my_task_work: `${PORTAL_API_BASE}employee_project_portal_start_my_task_work`,
+    stop_my_task_work: `${PORTAL_API_BASE}employee_project_portal_stop_my_task_work`,
+    add_task_update: `${PORTAL_API_BASE}employee_project_portal_add_task_update`,
+    upload_task_attachment: `${PORTAL_API_BASE}employee_project_portal_upload_task_attachment`,
+    get_notifications: `${PORTAL_API_BASE}employee_project_portal_get_notifications`,
+    mark_notifications_read: `${PORTAL_API_BASE}employee_project_portal_mark_notifications_read`
 };
 
 function eppGetEl(id) {
@@ -232,6 +257,24 @@ function eppFormatDate(value) {
         month: "short",
         year: "numeric"
     });
+}
+
+function eppFormatDateTime(value) {
+    const date = eppToDate(value);
+
+    if (!date) {
+        return "--";
+    }
+
+    return `${date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    })} · ${date.toLocaleTimeString("en-IN", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+    })}`;
 }
 
 function eppGetDeadlineParts(value) {
@@ -478,6 +521,159 @@ function eppRenderHeader() {
         user.department || user.company || "Employee"
     );
     eppSetText("sidebar-user-avatar", initials);
+}
+
+function eppSetNotificationDrawerOpen(isOpen) {
+    const drawer = eppGetEl("project-portal-notification-drawer");
+    const backdrop = eppGetEl("project-portal-notification-backdrop");
+    const trigger = eppGetEl("btn-project-portal-notifications");
+
+    if (isOpen) {
+        eppCloseSidebar();
+        eppCloseMyTaskDrawer();
+    }
+
+    drawer?.classList.toggle("is-open", isOpen);
+    drawer?.setAttribute("aria-hidden", String(!isOpen));
+    backdrop?.classList.toggle("hidden", !isOpen);
+    trigger?.setAttribute("aria-expanded", String(isOpen));
+    document.body.style.overflow = isOpen ? "hidden" : "";
+}
+
+function eppCloseNotificationDrawer() {
+    eppSetNotificationDrawerOpen(false);
+}
+
+function eppRenderNotificationBadge() {
+    const notifications = projectPortalState.notifications;
+    const badge = eppGetEl("project-portal-notification-count");
+    const button = eppGetEl("btn-project-portal-notifications");
+    const unreadCount = Math.max(0, Number(notifications.unreadCount) || 0);
+
+    if (badge) {
+        badge.textContent = unreadCount > 99 ? "99+" : String(unreadCount);
+        badge.classList.toggle("hidden", !unreadCount);
+    }
+
+    button?.setAttribute(
+        "aria-label",
+        unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"
+    );
+}
+
+function eppRenderNotifications() {
+    const notifications = projectPortalState.notifications;
+    const container = eppGetEl("project-portal-notification-list");
+    const markAllButton = eppGetEl("btn-mark-project-portal-notifications-read");
+
+    eppRenderNotificationBadge();
+
+    if (markAllButton) {
+        markAllButton.disabled = notifications.loading || !notifications.unreadCount;
+    }
+
+    if (!container) {
+        return;
+    }
+
+    if (notifications.loading && !notifications.rows.length) {
+        container.innerHTML = `<div class="epp-loading-state">Loading notifications...</div>`;
+        return;
+    }
+
+    if (!notifications.rows.length) {
+        container.innerHTML = `
+            <div class="epp-notification-empty">
+                <strong>You're all caught up.</strong>
+                <span>Due dates and blocker updates will appear here.</span>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = notifications.rows.map((notification) => {
+        const taskReference = notification.document_type === "Task" && notification.document_name
+            ? `<span>${eppEscapeHtml(notification.document_name)}</span>`
+            : "";
+        const taskLink = notification.link
+            ? `<a href="${eppEscapeHtml(notification.link)}">Open Task</a>`
+            : "";
+
+        return `
+            <article class="epp-notification-item${notification.read ? " is-read" : ""}">
+                <div class="epp-notification-item-header">
+                    <strong>${eppEscapeHtml(notification.title || "Project Portal update")}</strong>
+                    ${notification.read ? "" : '<span class="epp-notification-unread">New</span>'}
+                </div>
+                <p>${eppEscapeHtml(notification.description || "No additional details.")}</p>
+                <div class="epp-notification-item-meta">
+                    ${taskReference}
+                    <time>${eppEscapeHtml(eppFormatDateTime(notification.created_at))}</time>
+                    ${taskLink}
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+async function eppLoadNotifications() {
+    const notifications = projectPortalState.notifications;
+    const requestId = ++notifications.requestId;
+
+    notifications.loading = true;
+    eppRenderNotifications();
+
+    try {
+        const response = await eppCallPortal("get_notifications");
+
+        if (requestId !== notifications.requestId) {
+            return;
+        }
+
+        notifications.rows = response?.notifications || [];
+        notifications.unreadCount = Number(response?.unread_count) || 0;
+    } catch (error) {
+        if (requestId !== notifications.requestId) {
+            return;
+        }
+
+        console.error("Project Portal notification API Error:", error);
+    } finally {
+        if (requestId === notifications.requestId) {
+            notifications.loading = false;
+            eppRenderNotifications();
+        }
+    }
+}
+
+async function eppMarkProjectPortalNotificationsRead() {
+    const notifications = projectPortalState.notifications;
+
+    if (notifications.loading || !notifications.unreadCount) {
+        return;
+    }
+
+    notifications.loading = true;
+    eppRenderNotifications();
+
+    try {
+        const response = await eppCallPortal("mark_notifications_read");
+
+        notifications.unreadCount = Number(response?.unread_count) || 0;
+        notifications.rows = notifications.rows.map((notification) => ({
+            ...notification,
+            read: 1
+        }));
+    } catch (error) {
+        frappe.show_alert({
+            message: eppGetErrorMessage(error, "Unable to mark notifications as read."),
+            indicator: "red"
+        });
+        console.error("Project Portal notification read API Error:", error);
+    } finally {
+        notifications.loading = false;
+        eppRenderNotifications();
+    }
 }
 
 function eppRenderSetupState() {
@@ -875,18 +1071,6 @@ function eppSetProjectsLoading(isLoading) {
         isLoading
     );
 
-    if (isLoading) {
-        const previousButton = eppGetEl("btn-project-previous");
-        const nextButton = eppGetEl("btn-project-next");
-
-        if (previousButton) {
-            previousButton.disabled = true;
-        }
-
-        if (nextButton) {
-            nextButton.disabled = true;
-        }
-    }
 }
 
 function eppReadProjectFilters() {
@@ -916,46 +1100,164 @@ function eppSyncProjectFilterControls() {
     }
 }
 
-function eppRenderProjectsResultCount() {
-    const rows = projectPortalState.projects.rows || [];
-    const page = projectPortalState.projects.pagination?.page || 1;
-    const label = rows.length === 1 ? "Project" : "Projects";
+function eppGetVisiblePaginationPages(currentPage, totalPages) {
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
 
-    eppSetText(
-        "projects-result-count",
-        `${rows.length} ${label} on Page ${page}`
+    if (currentPage <= 4) {
+        return [1, 2, 3, 4, 5, "ellipsis-right", totalPages];
+    }
+
+    if (currentPage >= totalPages - 3) {
+        return [
+            1,
+            "ellipsis-left",
+            totalPages - 4,
+            totalPages - 3,
+            totalPages - 2,
+            totalPages - 1,
+            totalPages
+        ];
+    }
+
+    return [
+        1,
+        "ellipsis-left",
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        "ellipsis-right",
+        totalPages
+    ];
+}
+
+function eppRenderPaginationFooter({
+    state,
+    elementId,
+    summaryId,
+    pageNumbersId,
+    singularLabel,
+    pluralLabel
+}) {
+    const footer = eppGetEl(elementId);
+    const pagination = state.pagination || {};
+    const totalRecords = Math.max(Number(pagination.total_records) || 0, 0);
+    const pageLength = Math.max(
+        Number(pagination.page_length) || state.pageLength || 10,
+        1
     );
+    const totalPages = Math.max(Number(pagination.total_pages) || 0, 0);
+    const currentPage = totalPages
+        ? Math.min(Math.max(Number(pagination.page) || 1, 1), totalPages)
+        : 1;
+    const startRecord = totalRecords
+        ? ((currentPage - 1) * pageLength) + 1
+        : 0;
+    const endRecord = totalRecords
+        ? Math.min(currentPage * pageLength, totalRecords)
+        : 0;
+    const label = totalRecords === 1 ? singularLabel : pluralLabel;
+    const isLoading = Boolean(state.loading);
+
+    if (!footer) {
+        return;
+    }
+
+    footer.classList.remove("hidden");
+    eppSetText(
+        summaryId,
+        totalRecords
+            ? `${startRecord}–${endRecord} of ${pagination.is_truncated ? "first " : ""}${totalRecords} ${label}`
+            : `0 ${pluralLabel}`
+    );
+
+    footer.querySelectorAll("[data-pagination-page]").forEach((button) => {
+        const target = button.dataset.paginationPage;
+        const targetPage = target === "first"
+            ? 1
+            : target === "previous"
+                ? currentPage - 1
+                : target === "next"
+                    ? currentPage + 1
+                    : target === "last"
+                        ? totalPages
+                        : Number(target);
+
+        button.disabled = (
+            isLoading
+            || !totalPages
+            || targetPage < 1
+            || targetPage > totalPages
+            || targetPage === currentPage
+        );
+    });
+
+    const pageNumbers = eppGetEl(pageNumbersId);
+
+    if (pageNumbers) {
+        pageNumbers.innerHTML = eppGetVisiblePaginationPages(currentPage, totalPages)
+            .map((value) => {
+                if (typeof value !== "number") {
+                    return '<span class="epp-pagination-ellipsis" aria-hidden="true">…</span>';
+                }
+
+                const isActive = value === currentPage;
+
+                return `
+                    <button type="button" class="epp-pagination-page${isActive ? " is-active" : ""}" data-pagination-page="${value}"${isActive ? ' aria-current="page"' : ""}${isLoading || isActive ? " disabled" : ""}>${value}</button>
+                `;
+            })
+            .join("");
+    }
+}
+
+function eppBindPaginationControls(elementId, state, loadPage) {
+    eppGetEl(elementId)?.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-pagination-page]");
+
+        if (!button || state.loading) {
+            return;
+        }
+
+        const pagination = state.pagination || {};
+        const totalPages = Math.max(Number(pagination.total_pages) || 0, 0);
+        const currentPage = Math.max(Number(pagination.page) || 1, 1);
+        const target = button.dataset.paginationPage;
+        const nextPage = target === "first"
+            ? 1
+            : target === "previous"
+                ? currentPage - 1
+                : target === "next"
+                    ? currentPage + 1
+                    : target === "last"
+                        ? totalPages
+                        : Number(target);
+
+        if (
+            !totalPages
+            || !Number.isInteger(nextPage)
+            || nextPage < 1
+            || nextPage > totalPages
+            || nextPage === currentPage
+        ) {
+            return;
+        }
+
+        state.page = nextPage;
+        loadPage();
+    });
 }
 
 function eppRenderProjectsPagination() {
-    const pagination = projectPortalState.projects.pagination || {};
-    const element = eppGetEl("projects-pagination");
-    const previousButton = eppGetEl("btn-project-previous");
-    const nextButton = eppGetEl("btn-project-next");
-    const hasPrevious = Boolean(pagination.has_previous);
-    const hasMore = Boolean(pagination.has_more);
-
-    element?.classList.toggle(
-        "hidden",
-        !(hasPrevious || hasMore)
-    );
-
-    if (previousButton) {
-        previousButton.disabled =
-            !hasPrevious
-            || projectPortalState.projects.loading;
-    }
-
-    if (nextButton) {
-        nextButton.disabled =
-            !hasMore
-            || projectPortalState.projects.loading;
-    }
-
-    eppSetText(
-        "projects-current-page",
-        pagination.page || 1
-    );
+    eppRenderPaginationFooter({
+        state: projectPortalState.projects,
+        elementId: "projects-pagination",
+        summaryId: "projects-pagination-summary",
+        pageNumbersId: "projects-page-numbers",
+        singularLabel: "Project",
+        pluralLabel: "Projects"
+    });
 }
 
 function eppRenderProjectsList() {
@@ -973,7 +1275,6 @@ function eppRenderProjectsList() {
             </div>
         `;
 
-        eppRenderProjectsResultCount();
         eppRenderProjectsPagination();
         return;
     }
@@ -1094,7 +1395,6 @@ function eppRenderProjectsList() {
         })
         .join("");
 
-    eppRenderProjectsResultCount();
     eppRenderProjectsPagination();
 }
 
@@ -1256,40 +1556,15 @@ function eppGetMyTaskPriorityClass(priority) {
     return "";
 }
 
-function eppRenderMyTasksResultCount() {
-    const myTasks = projectPortalState.myTasks;
-    const count = myTasks.rows.length;
-    const label = count === 1 ? "Task" : "Tasks";
-
-    eppSetText(
-        "my-tasks-result-count",
-        `${count} ${label} on Page ${myTasks.pagination.page || 1}`
-    );
-}
-
 function eppRenderMyTasksPagination() {
-    const myTasks = projectPortalState.myTasks;
-    const pagination = myTasks.pagination || {};
-    const hasPrevious = Boolean(pagination.has_previous);
-    const hasMore = Boolean(pagination.has_more);
-
-    eppGetEl("my-tasks-pagination")?.classList.toggle(
-        "hidden",
-        !(hasPrevious || hasMore)
-    );
-
-    const previousButton = eppGetEl("btn-my-task-previous");
-    const nextButton = eppGetEl("btn-my-task-next");
-
-    if (previousButton) {
-        previousButton.disabled = !hasPrevious || myTasks.loading;
-    }
-
-    if (nextButton) {
-        nextButton.disabled = !hasMore || myTasks.loading;
-    }
-
-    eppSetText("my-tasks-current-page", pagination.page || 1);
+    eppRenderPaginationFooter({
+        state: projectPortalState.myTasks,
+        elementId: "my-tasks-pagination",
+        summaryId: "my-tasks-pagination-summary",
+        pageNumbersId: "my-tasks-page-numbers",
+        singularLabel: "Task",
+        pluralLabel: "Tasks"
+    });
 }
 
 function eppRenderMyTasks() {
@@ -1306,7 +1581,6 @@ function eppRenderMyTasks() {
                 No assigned tasks matched the selected filters.
             </div>
         `;
-        eppRenderMyTasksResultCount();
         eppRenderMyTasksPagination();
         return;
     }
@@ -1339,7 +1613,6 @@ function eppRenderMyTasks() {
         })
         .join("");
 
-    eppRenderMyTasksResultCount();
     eppRenderMyTasksPagination();
 }
 
@@ -1493,27 +1766,14 @@ function eppRenderTimesheetsSetup(setupComplete, missingSetup = []) {
 }
 
 function eppRenderTimesheetsPagination() {
-    const timesheets = projectPortalState.timesheets;
-    const pagination = timesheets.pagination || {};
-    const hasPrevious = Boolean(pagination.has_previous);
-    const hasMore = Boolean(pagination.has_more);
-
-    eppGetEl("timesheets-pagination")?.classList.toggle(
-        "hidden",
-        !(hasPrevious || hasMore)
-    );
-    const previousButton = eppGetEl("btn-timesheet-previous");
-    const nextButton = eppGetEl("btn-timesheet-next");
-
-    if (previousButton) {
-        previousButton.disabled = !hasPrevious || timesheets.loading;
-    }
-
-    if (nextButton) {
-        nextButton.disabled = !hasMore || timesheets.loading;
-    }
-
-    eppSetText("timesheets-current-page", pagination.page || 1);
+    eppRenderPaginationFooter({
+        state: projectPortalState.timesheets,
+        elementId: "timesheets-pagination",
+        summaryId: "timesheets-pagination-summary",
+        pageNumbersId: "timesheets-page-numbers",
+        singularLabel: "Timesheet",
+        pluralLabel: "Timesheets"
+    });
 }
 
 function eppRenderTimesheetBreakdown(id, rows, emptyMessage) {
@@ -1589,7 +1849,6 @@ function eppRenderTimesheets() {
 
     if (!rows.length) {
         container.innerHTML = `<div class="epp-section-empty">No Timesheets matched the selected filters.</div>`;
-        eppSetText("timesheets-result-count", "0 Timesheets");
         eppRenderTimesheetsPagination();
         return;
     }
@@ -1619,11 +1878,6 @@ function eppRenderTimesheets() {
         `;
     }).join("");
 
-    const count = rows.length;
-    eppSetText(
-        "timesheets-result-count",
-        `${count} ${count === 1 ? "Timesheet" : "Timesheets"} on Page ${projectPortalState.timesheets.pagination.page || 1}`
-    );
     eppRenderTimesheetsPagination();
 }
 
@@ -1721,31 +1975,30 @@ function eppHideTaskBoardError() {
     element.classList.add("hidden");
 }
 
-function eppRenderTaskBoardResultCount() {
-    const taskBoard = projectPortalState.taskBoard;
-    const count = taskBoard.rows.length;
-    const label = count === 1 ? "Task" : "Tasks";
-    const suffix = taskBoard.isTruncated ? ` of first ${taskBoard.boardLimit}` : "";
-
-    eppSetText("task-board-result-count", `${count} ${label}${suffix}`);
-}
-
 function eppRenderTaskBoard() {
     const container = eppGetEl("task-board-lanes");
     const taskBoard = projectPortalState.taskBoard;
+    const limitNotice = eppGetEl("task-board-limit-notice");
 
     if (!container) {
         return;
     }
 
+    if (limitNotice) {
+        limitNotice.textContent = taskBoard.isTruncated
+            ? `Showing the first ${taskBoard.boardLimit} matched tasks. Refine the search to narrow this board.`
+            : "";
+        limitNotice.classList.toggle("hidden", !taskBoard.isTruncated);
+    }
+
     const statuses = taskBoard.statuses || [];
     const tasks = taskBoard.rows || [];
+    const activeWorkTask = taskBoard.activeWork?.task || "";
 
     if (!statuses.length) {
         container.innerHTML = `
             <div class="epp-card epp-section-empty">No Task statuses are available for this board.</div>
         `;
-        eppRenderTaskBoardResultCount();
         return;
     }
 
@@ -1766,19 +2019,33 @@ function eppRenderTaskBoard() {
                         const priority = task.priority || "No Priority";
                         const dueLabel = eppFormatDate(task.due_date);
                         const isMoving = taskBoard.movingTask === task.name;
+                        const isWorking = activeWorkTask === task.name;
+                        const hasAnotherActiveSession = Boolean(activeWorkTask && !isWorking);
+                        const isClosed = ["completed", "cancelled"].includes(
+                            String(task.status || "").toLowerCase()
+                        );
+                        const isWorkActionPending = taskBoard.workingTask === task.name;
+                        const workAction = isClosed ? "" : `
+                            <div class="epp-task-board-work-action">
+                                <button type="button" class="${isWorking ? "epp-secondary-button" : "epp-primary-button"} epp-task-board-work-button" data-task-work-action="${isWorking ? "stop" : "start"}" data-task-work="${eppEscapeHtml(task.name || "")}"${hasAnotherActiveSession || isWorkActionPending ? " disabled" : ""}>
+                                    ${isWorkActionPending ? "Saving..." : isWorking ? "Stop Work" : hasAnotherActiveSession ? "Another task running" : "Start Work"}
+                                </button>
+                            </div>
+                        `;
 
                         return `
-                            <article class="epp-task-board-card${isMoving ? " is-moving" : ""}" draggable="true" tabindex="0" role="button" aria-label="Open ${eppEscapeHtml(task.subject || task.name || "Task")}" data-open-board-task="${eppEscapeHtml(task.name || "")}">
+                            <article class="epp-task-board-card${isMoving ? " is-moving" : ""}" draggable="true" data-open-board-task="${eppEscapeHtml(task.name || "")}">
                                 <div class="epp-task-board-card-topline">
                                     <span class="epp-task-priority ${eppGetMyTaskPriorityClass(task.priority)}">${eppEscapeHtml(priority)}</span>
                                     <span class="epp-task-board-due${task.is_overdue ? " is-overdue" : ""}">${task.is_overdue ? "Overdue · " : "Due · "}${eppEscapeHtml(dueLabel)}</span>
                                 </div>
-                                <strong>${eppEscapeHtml(task.subject || task.name || "Untitled Task")}</strong>
+                                <button type="button" class="epp-task-board-open" data-open-board-task="${eppEscapeHtml(task.name || "")}" aria-label="Open ${eppEscapeHtml(task.subject || task.name || "Task")}">${eppEscapeHtml(task.subject || task.name || "Untitled Task")}</button>
                                 <span class="epp-task-board-project">${eppEscapeHtml(task.project || "No Project")}</span>
                                 <div class="epp-task-board-progress">
                                     <div class="epp-project-progress-head"><strong>Progress</strong><span>${percentage}%</span></div>
                                     <div class="epp-progress-track"><div class="epp-progress-bar" style="width: ${percentage}%"></div></div>
                                 </div>
+                                ${workAction}
                             </article>
                         `;
                     }).join("") : `
@@ -1789,7 +2056,6 @@ function eppRenderTaskBoard() {
         `;
     }).join("");
 
-    eppRenderTaskBoardResultCount();
 }
 
 async function eppLoadTaskBoard() {
@@ -1810,6 +2076,7 @@ async function eppLoadTaskBoard() {
 
         taskBoard.statuses = response?.statuses || [];
         taskBoard.rows = response?.tasks || [];
+        taskBoard.activeWork = response?.active_work || null;
         taskBoard.isTruncated = Boolean(response?.is_truncated);
         taskBoard.boardLimit = Number(response?.board_limit) || 0;
         taskBoard.movingTask = "";
@@ -1890,6 +2157,70 @@ async function eppMoveTaskOnBoard(taskName, status) {
             eppGetErrorMessage(error, "Unable to update this task status.")
         );
         console.error("Task Board update API Error:", error);
+    }
+}
+
+async function eppSetMyTaskWork(taskName, action) {
+    const myTasks = projectPortalState.myTasks;
+    const taskBoard = projectPortalState.taskBoard;
+
+    if (!taskName || myTasks.workingTask) {
+        return;
+    }
+
+    myTasks.workingTask = taskName;
+    taskBoard.workingTask = taskName;
+
+    if (eppGetPortalPage() === "task-board") {
+        eppRenderTaskBoard();
+    }
+
+    try {
+        await eppCallPortal(
+            action === "stop" ? "stop_my_task_work" : "start_my_task_work",
+            { task: taskName }
+        );
+
+        frappe.show_alert({
+            message: action === "stop" ? "Work session stopped." : "Work session started.",
+            indicator: "green"
+        });
+
+        const refreshes = [eppLoadDashboard(), eppLoadMyTasks()];
+
+        if (eppGetPortalPage() === "task-board") {
+            refreshes.push(eppLoadTaskBoard());
+        }
+
+        if (eppGetPortalPage() === "timesheets") {
+            refreshes.push(eppLoadTimesheets());
+        }
+
+        await Promise.all(refreshes);
+
+        if (myTasks.detail?.name === taskName) {
+            await eppOpenMyTaskDetails(taskName);
+        }
+    } catch (error) {
+        const message = eppGetErrorMessage(
+            error,
+            action === "stop" ? "Unable to stop this work session." : "Unable to start work for this task."
+        );
+
+        frappe.show_alert({ message, indicator: "red" });
+
+        if (eppGetPortalPage() === "task-board") {
+            eppShowTaskBoardError(message);
+        }
+
+        console.error("Task work session API Error:", error);
+    } finally {
+        myTasks.workingTask = "";
+        taskBoard.workingTask = "";
+
+        if (eppGetPortalPage() === "task-board") {
+            eppRenderTaskBoard();
+        }
     }
 }
 
@@ -2023,6 +2354,82 @@ function eppRenderMyTaskEditForm(task) {
     `;
 }
 
+function eppRenderTaskUpdateTimeline(task) {
+    const updates = Array.isArray(task.updates) ? task.updates : [];
+    const attachments = Array.isArray(task.attachments) ? task.attachments : [];
+    const statusOptions = task.edit_options?.statuses || [];
+    const isSaving = projectPortalState.myTasks.updating;
+    const updateRows = updates.length ? updates.map((update) => `
+        <article class="epp-task-update-entry">
+            <div class="epp-task-update-entry-header">
+                <strong>${eppEscapeHtml(update.author || "Employee")}</strong>
+                <time>${eppEscapeHtml(eppFormatDateTime(update.created_at))}</time>
+            </div>
+            <p>${eppEscapeHtml(update.content || "")}</p>
+        </article>
+    `).join("") : `
+        <div class="epp-task-update-empty">No task updates yet. Add the first progress update below.</div>
+    `;
+    const attachmentRows = attachments.length ? attachments.map((attachment) => `
+        <a class="epp-task-attachment" href="${eppEscapeHtml(attachment.file_url || "#")}" target="_blank" rel="noopener">
+            <span>${eppEscapeHtml(attachment.file_name || "Attachment")}</span>
+            <small>${eppEscapeHtml(eppFormatDate(attachment.created_at))}</small>
+        </a>
+    `).join("") : `
+        <span class="epp-task-attachments-empty">No attachments added.</span>
+    `;
+
+    return `
+        <section class="epp-task-update-section">
+            <div class="epp-task-update-section-header">
+                <div><span class="epp-section-label">Progress Update</span><h3>Add Work Update</h3></div>
+                <span>Saved to Task timeline</span>
+            </div>
+            <form id="my-task-update-form" class="epp-task-update-form">
+                <div class="epp-task-edit-field epp-task-edit-field-wide">
+                    <label for="my-task-update-work-completed">Work Completed</label>
+                    <textarea id="my-task-update-work-completed" name="work_completed" rows="4" maxlength="3000" placeholder="What did you complete?" required${isSaving ? " disabled" : ""}></textarea>
+                </div>
+                <div class="epp-task-edit-grid">
+                    <div class="epp-task-edit-field">
+                        <label for="my-task-update-status">Status</label>
+                        <select id="my-task-update-status" name="status"${isSaving ? " disabled" : ""}>${eppRenderMyTaskSelectOptions(statusOptions, task.status, "Keep current status")}</select>
+                    </div>
+                    <div class="epp-task-edit-field">
+                        <label for="my-task-update-progress">Progress (%)</label>
+                        <input id="my-task-update-progress" name="progress" type="number" min="0" max="100" step="1" value="${eppEscapeHtml(task.progress || 0)}"${isSaving ? " disabled" : ""}>
+                    </div>
+                </div>
+                <div class="epp-task-edit-field epp-task-edit-field-wide">
+                    <label for="my-task-update-blocker">Blocker (optional)</label>
+                    <textarea id="my-task-update-blocker" name="blocker" rows="2" maxlength="1500" placeholder="What is blocking this task?"${isSaving ? " disabled" : ""}></textarea>
+                </div>
+                <div class="epp-task-edit-field epp-task-edit-field-wide">
+                    <label for="my-task-update-next-step">Next Step (optional)</label>
+                    <textarea id="my-task-update-next-step" name="next_step" rows="2" maxlength="1500" placeholder="What will happen next?"${isSaving ? " disabled" : ""}></textarea>
+                </div>
+                <div class="epp-task-edit-field epp-task-edit-field-wide">
+                    <label for="my-task-update-attachments">Attachments (optional)</label>
+                    <input id="my-task-update-attachments" name="attachments" type="file" multiple${isSaving ? " disabled" : ""}>
+                    <small class="epp-task-update-file-help">Images, PDF, TXT, CSV, Microsoft Office, and supported video files are uploaded privately.</small>
+                </div>
+                <div id="my-task-update-error" class="epp-alert epp-alert-error hidden"></div>
+                <div class="epp-task-edit-actions">
+                    <button type="submit" class="epp-primary-button"${isSaving ? " disabled" : ""}>${isSaving ? "Saving Update..." : "Save Update"}</button>
+                </div>
+            </form>
+        </section>
+        <section class="epp-task-update-section">
+            <div class="epp-task-update-section-header"><div><span class="epp-section-label">Activity</span><h3>Update Timeline</h3></div><span>${updates.length} update${updates.length === 1 ? "" : "s"}</span></div>
+            <div class="epp-task-update-timeline">${updateRows}</div>
+        </section>
+        <section class="epp-task-update-section">
+            <div class="epp-task-update-section-header"><div><span class="epp-section-label">Files</span><h3>Attachments</h3></div><span>${attachments.length} file${attachments.length === 1 ? "" : "s"}</span></div>
+            <div class="epp-task-attachments">${attachmentRows}</div>
+        </section>
+    `;
+}
+
 function eppRenderMyTaskDetails(task) {
     const container = eppGetEl("my-task-drawer-content");
 
@@ -2036,6 +2443,21 @@ function eppRenderMyTaskDetails(task) {
     const percentage = eppClampPercentage(task.progress);
     const priority = task.priority || "No Priority";
     const hasEditableFields = Array.isArray(task.editable_fields) && task.editable_fields.length;
+    const activeWorkTask = task.active_work?.task || "";
+    const isWorking = activeWorkTask === task.name;
+    const hasAnotherActiveSession = Boolean(activeWorkTask && !isWorking);
+    const isClosed = ["completed", "cancelled"].includes(
+        String(task.status || "").toLowerCase()
+    );
+    const isWorkActionPending = projectPortalState.myTasks.workingTask === task.name;
+    const workAction = isClosed ? "" : `
+        <div class="epp-task-detail-toolbar">
+            <span>${isWorking ? "Work is running for this task." : hasAnotherActiveSession ? "Another task has a running work session." : "Start a work session for this task."}</span>
+            <button type="button" class="${isWorking ? "epp-secondary-button" : "epp-primary-button"}" data-task-work-action="${isWorking ? "stop" : "start"}" data-task-work="${eppEscapeHtml(task.name || "")}"${hasAnotherActiveSession || isWorkActionPending ? " disabled" : ""}>
+                ${isWorkActionPending ? "Saving..." : isWorking ? "Stop Work" : hasAnotherActiveSession ? "Another task running" : "Start Work"}
+            </button>
+        </div>
+    `;
     const editAction = hasEditableFields ? `
         <div class="epp-task-detail-toolbar">
             <span>Task Owner can update this task.</span>
@@ -2045,6 +2467,7 @@ function eppRenderMyTaskDetails(task) {
 
     eppSetText("my-task-detail-subject", task.subject || task.name || "Task");
     container.innerHTML = `
+        ${workAction}
         ${editAction}
         <div class="epp-task-detail-pills">
             <span class="epp-task-status-pill ${eppGetTaskStatusClass(task.status)}">${eppEscapeHtml(task.status || "Open")}</span>
@@ -2065,6 +2488,7 @@ function eppRenderMyTaskDetails(task) {
             <div class="epp-project-progress-head"><strong>Progress</strong><span>${percentage}%</span></div>
             <div class="epp-progress-track"><div class="epp-progress-bar" style="width: ${percentage}%"></div></div>
         </div>
+        ${eppRenderTaskUpdateTimeline(task)}
     `;
 }
 
@@ -2079,10 +2503,123 @@ function eppShowMyTaskEditError(message) {
     element.classList.remove("hidden");
 }
 
+function eppShowMyTaskUpdateError(message) {
+    const element = eppGetEl("my-task-update-error");
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+    element.classList.remove("hidden");
+}
+
+async function eppUploadTaskAttachment(taskName, file) {
+    const formData = new FormData();
+    formData.append("task", taskName);
+    formData.append("file", file, file.name);
+
+    const response = await fetch(
+        `/api/method/${PROJECT_PORTAL_METHODS.upload_task_attachment}`,
+        {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                Accept: "application/json",
+                "X-Frappe-CSRF-Token": frappe.csrf_token || ""
+            },
+            body: formData
+        }
+    );
+    const responseData = await response.json().catch(() => ({}));
+
+    if (!response.ok || responseData.exc) {
+        const error = new Error(
+            responseData.message || "Unable to upload this attachment."
+        );
+
+        error._server_messages = responseData._server_messages;
+        error.responseJSON = responseData;
+        throw error;
+    }
+
+    return responseData.message;
+}
+
+async function eppSaveMyTaskUpdate(form) {
+    const myTasks = projectPortalState.myTasks;
+    const task = myTasks.detail;
+
+    if (!task || myTasks.saving || myTasks.updating) {
+        return;
+    }
+
+    const formData = new FormData(form);
+    const update = { task: task.name };
+    const attachments = Array.from(
+        form.querySelector("[name='attachments']")?.files || []
+    );
+
+    for (const [fieldname, value] of formData.entries()) {
+        if (fieldname !== "attachments") {
+            update[fieldname] = value;
+        }
+    }
+
+    myTasks.updating = true;
+    form.querySelectorAll("button, input, select, textarea").forEach((element) => {
+        element.disabled = true;
+    });
+
+    try {
+        const response = await eppCallPortal("add_task_update", update);
+        const failedAttachments = [];
+
+        for (const attachment of attachments) {
+            try {
+                await eppUploadTaskAttachment(task.name, attachment);
+            } catch (error) {
+                failedAttachments.push(
+                    `${attachment.name}: ${eppGetErrorMessage(error, "Upload failed.")}`
+                );
+            }
+        }
+
+        myTasks.updating = false;
+        await eppOpenMyTaskDetails(task.name);
+        eppLoadDashboard();
+        eppLoadMyTasks();
+
+        if (eppGetPortalPage() === "task-board") {
+            eppLoadTaskBoard();
+        }
+
+        if (failedAttachments.length) {
+            frappe.show_alert({
+                message: `Task update saved. ${failedAttachments.length} attachment${failedAttachments.length === 1 ? "" : "s"} could not be uploaded.`,
+                indicator: "orange"
+            });
+            console.error("Task attachment upload errors:", failedAttachments);
+            return;
+        }
+
+        frappe.show_alert({ message: "Task update saved.", indicator: "green" });
+    } catch (error) {
+        myTasks.updating = false;
+        form.querySelectorAll("button, input, select, textarea").forEach((element) => {
+            element.disabled = false;
+        });
+        eppShowMyTaskUpdateError(
+            eppGetErrorMessage(error, "Unable to save this task update.")
+        );
+        console.error("Task update API Error:", error);
+    }
+}
+
 function eppStartMyTaskEdit() {
     const myTasks = projectPortalState.myTasks;
 
-    if (!myTasks.detail || myTasks.saving) {
+    if (!myTasks.detail || myTasks.saving || myTasks.updating) {
         return;
     }
 
@@ -2093,7 +2630,7 @@ function eppStartMyTaskEdit() {
 function eppCancelMyTaskEdit() {
     const myTasks = projectPortalState.myTasks;
 
-    if (!myTasks.detail || myTasks.saving) {
+    if (!myTasks.detail || myTasks.saving || myTasks.updating) {
         return;
     }
 
@@ -2344,40 +2881,15 @@ function eppRenderWorkspaceOverview() {
     eppRenderWorkspaceMembers(project.members || []);
 }
 
-function eppRenderWorkspaceTaskResultCount() {
-    const workspace = projectPortalState.workspace;
-    const tasks = workspace.data?.tasks || [];
-    const page = workspace.pagination?.page || 1;
-    const label = tasks.length === 1 ? "Task" : "Tasks";
-
-    eppSetText(
-        "workspace-task-result-count",
-        `${tasks.length} ${label} on Page ${page}`
-    );
-}
-
 function eppRenderWorkspaceTaskPagination() {
-    const workspace = projectPortalState.workspace;
-    const pagination = workspace.pagination || {};
-    const previousButton = eppGetEl("btn-workspace-task-previous");
-    const nextButton = eppGetEl("btn-workspace-task-next");
-    const hasPrevious = Boolean(pagination.has_previous);
-    const hasMore = Boolean(pagination.has_more);
-
-    eppGetEl("workspace-task-pagination")?.classList.toggle(
-        "hidden",
-        !(hasPrevious || hasMore)
-    );
-
-    if (previousButton) {
-        previousButton.disabled = !hasPrevious || workspace.loading;
-    }
-
-    if (nextButton) {
-        nextButton.disabled = !hasMore || workspace.loading;
-    }
-
-    eppSetText("workspace-task-current-page", pagination.page || 1);
+    eppRenderPaginationFooter({
+        state: projectPortalState.workspace,
+        elementId: "workspace-task-pagination",
+        summaryId: "workspace-task-pagination-summary",
+        pageNumbersId: "workspace-task-page-numbers",
+        singularLabel: "Task",
+        pluralLabel: "Tasks"
+    });
 }
 
 function eppRenderWorkspaceTasks() {
@@ -2395,7 +2907,6 @@ function eppRenderWorkspaceTasks() {
                 No permitted tasks matched the selected filters.
             </div>
         `;
-        eppRenderWorkspaceTaskResultCount();
         eppRenderWorkspaceTaskPagination();
         return;
     }
@@ -2438,7 +2949,6 @@ function eppRenderWorkspaceTasks() {
         })
         .join("");
 
-    eppRenderWorkspaceTaskResultCount();
     eppRenderWorkspaceTaskPagination();
 }
 
@@ -2639,6 +3149,37 @@ function eppBindEvents() {
         eppCloseSidebar
     );
 
+    eppGetEl("btn-project-portal-notifications")?.addEventListener(
+        "click",
+        () => {
+            const isOpen = eppGetEl("project-portal-notification-drawer")
+                ?.classList.contains("is-open");
+
+            if (isOpen) {
+                eppCloseNotificationDrawer();
+                return;
+            }
+
+            eppSetNotificationDrawerOpen(true);
+            eppLoadNotifications();
+        }
+    );
+
+    eppGetEl("btn-close-project-portal-notifications")?.addEventListener(
+        "click",
+        eppCloseNotificationDrawer
+    );
+
+    eppGetEl("project-portal-notification-backdrop")?.addEventListener(
+        "click",
+        eppCloseNotificationDrawer
+    );
+
+    eppGetEl("btn-mark-project-portal-notifications-read")?.addEventListener(
+        "click",
+        eppMarkProjectPortalNotificationsRead
+    );
+
     eppGetEl("project-search")?.addEventListener(
         "input",
         eppScheduleProjectSearch
@@ -2731,133 +3272,25 @@ function eppBindEvents() {
         }
     );
 
-    eppGetEl("btn-project-previous")?.addEventListener(
-        "click",
-        () => {
-            if (
-                projectPortalState.projects.loading
-                || !projectPortalState.projects.pagination?.has_previous
-            ) {
-                return;
-            }
-
-            projectPortalState.projects.page = Math.max(
-                projectPortalState.projects.page - 1,
-                1
-            );
-
-            eppLoadProjects({
-                scrollToTop: true
-            });
-        }
+    eppBindPaginationControls(
+        "projects-pagination",
+        projectPortalState.projects,
+        () => eppLoadProjects({ scrollToTop: true })
     );
-
-    eppGetEl("btn-project-next")?.addEventListener(
-        "click",
-        () => {
-            if (
-                projectPortalState.projects.loading
-                || !projectPortalState.projects.pagination?.has_more
-            ) {
-                return;
-            }
-
-            projectPortalState.projects.page += 1;
-
-            eppLoadProjects({
-                scrollToTop: true
-            });
-        }
+    eppBindPaginationControls(
+        "my-tasks-pagination",
+        projectPortalState.myTasks,
+        () => eppLoadMyTasks({ scrollToTop: true })
     );
-
-    eppGetEl("btn-my-task-previous")?.addEventListener(
-        "click",
-        () => {
-            const myTasks = projectPortalState.myTasks;
-
-            if (myTasks.loading || !myTasks.pagination?.has_previous) {
-                return;
-            }
-
-            myTasks.page = Math.max(myTasks.page - 1, 1);
-            eppLoadMyTasks({ scrollToTop: true });
-        }
+    eppBindPaginationControls(
+        "timesheets-pagination",
+        projectPortalState.timesheets,
+        eppLoadTimesheets
     );
-
-    eppGetEl("btn-my-task-next")?.addEventListener(
-        "click",
-        () => {
-            const myTasks = projectPortalState.myTasks;
-
-            if (myTasks.loading || !myTasks.pagination?.has_more) {
-                return;
-            }
-
-            myTasks.page += 1;
-            eppLoadMyTasks({ scrollToTop: true });
-        }
-    );
-
-    eppGetEl("btn-timesheet-previous")?.addEventListener(
-        "click",
-        () => {
-            const timesheets = projectPortalState.timesheets;
-
-            if (timesheets.loading || !timesheets.pagination?.has_previous) {
-                return;
-            }
-
-            timesheets.page = Math.max(timesheets.page - 1, 1);
-            eppLoadTimesheets();
-        }
-    );
-
-    eppGetEl("btn-timesheet-next")?.addEventListener(
-        "click",
-        () => {
-            const timesheets = projectPortalState.timesheets;
-
-            if (timesheets.loading || !timesheets.pagination?.has_more) {
-                return;
-            }
-
-            timesheets.page += 1;
-            eppLoadTimesheets();
-        }
-    );
-
-    eppGetEl("btn-workspace-task-previous")?.addEventListener(
-        "click",
-        () => {
-            const workspace = projectPortalState.workspace;
-
-            if (
-                workspace.loading
-                || !workspace.pagination?.has_previous
-            ) {
-                return;
-            }
-
-            workspace.page = Math.max(workspace.page - 1, 1);
-            eppLoadWorkspace();
-        }
-    );
-
-    eppGetEl("btn-workspace-task-next")?.addEventListener(
-        "click",
-        () => {
-            const workspace = projectPortalState.workspace;
-
-            if (
-                workspace.loading
-                || !workspace.pagination?.has_more
-            ) {
-                return;
-            }
-
-            workspace.page += 1;
-            eppLoadWorkspace();
-        }
+    eppBindPaginationControls(
+        "workspace-task-pagination",
+        projectPortalState.workspace,
+        eppLoadWorkspace
     );
 
     eppGetEl("projects-list")?.addEventListener(
@@ -2889,6 +3322,17 @@ function eppBindEvents() {
     eppGetEl("task-board-lanes")?.addEventListener(
         "click",
         (event) => {
+            const workButton = event.target.closest("[data-task-work-action]");
+
+            if (workButton?.dataset.taskWork) {
+                event.stopPropagation();
+                eppSetMyTaskWork(
+                    workButton.dataset.taskWork,
+                    workButton.dataset.taskWorkAction
+                );
+                return;
+            }
+
             const card = event.target.closest("[data-open-board-task]");
 
             if (!card?.dataset.openBoardTask) {
@@ -2903,6 +3347,10 @@ function eppBindEvents() {
         "keydown",
         (event) => {
             if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+
+            if (event.target.closest("button")) {
                 return;
             }
 
@@ -2998,6 +3446,16 @@ function eppBindEvents() {
     eppGetEl("my-task-drawer-content")?.addEventListener(
         "click",
         (event) => {
+            const workButton = event.target.closest("[data-task-work-action]");
+
+            if (workButton?.dataset.taskWork) {
+                eppSetMyTaskWork(
+                    workButton.dataset.taskWork,
+                    workButton.dataset.taskWorkAction
+                );
+                return;
+            }
+
             if (event.target.closest("[data-edit-my-task]")) {
                 eppStartMyTaskEdit();
                 return;
@@ -3012,6 +3470,14 @@ function eppBindEvents() {
     eppGetEl("my-task-drawer-content")?.addEventListener(
         "submit",
         (event) => {
+            const updateForm = event.target.closest("#my-task-update-form");
+
+            if (updateForm) {
+                event.preventDefault();
+                eppSaveMyTaskUpdate(updateForm);
+                return;
+            }
+
             const form = event.target.closest("#my-task-edit-form");
 
             if (!form) {
@@ -3038,6 +3504,7 @@ function eppBindEvents() {
             if (event.key === "Escape") {
                 eppCloseSidebar();
                 eppCloseMyTaskDrawer();
+                eppCloseNotificationDrawer();
             }
         }
     );
@@ -3055,7 +3522,7 @@ async function eppInitializeProjectPortal() {
 
     const portalPage = eppGetPortalPage();
 
-    await eppLoadDashboard();
+    await Promise.all([eppLoadDashboard(), eppLoadNotifications()]);
 
     if (portalPage === "projects") {
         eppSyncProjectFilterControls();

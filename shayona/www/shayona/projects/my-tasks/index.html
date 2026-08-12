@@ -24,7 +24,6 @@
             </div>
             <div class="epp-filter-action"><button id="btn-reset-my-task-filters" type="button" class="epp-secondary-button">Reset Filters</button></div>
         </div>
-        <div class="epp-filter-footer"><span id="my-tasks-result-count" class="epp-result-count">0 Tasks</span></div>
     </section>
 
     <div class="epp-list-scroll-panel">
@@ -32,11 +31,16 @@
         <div id="my-tasks-error" class="epp-alert epp-alert-error hidden"></div>
         <section id="my-tasks-list" class="epp-card epp-my-task-list"><div class="epp-section-empty">Loading your permitted tasks...</div></section>
     </div>
-    <div id="my-tasks-pagination" class="epp-pagination hidden">
-        <button id="btn-my-task-previous" type="button" class="epp-pagination-button" disabled>{{ epp_icon("arrow-left") }}<span>Previous</span></button>
-        <div class="epp-pagination-status"><span>Page</span><strong id="my-tasks-current-page">1</strong></div>
-        <button id="btn-my-task-next" type="button" class="epp-pagination-button" disabled><span>Next</span>{{ epp_icon("arrow-right") }}</button>
-    </div>
+    <nav id="my-tasks-pagination" class="epp-pagination hidden" aria-label="My Tasks pagination">
+        <span id="my-tasks-pagination-summary" class="epp-pagination-summary">0 Tasks</span>
+        <div class="epp-pagination-controls">
+            <button type="button" class="epp-pagination-button" data-pagination-page="first">First</button>
+            <button type="button" class="epp-pagination-button" data-pagination-page="previous">{{ epp_icon("arrow-left") }}<span>Previous</span></button>
+            <div id="my-tasks-page-numbers" class="epp-pagination-page-numbers"></div>
+            <button type="button" class="epp-pagination-button" data-pagination-page="next"><span>Next</span>{{ epp_icon("arrow-right") }}</button>
+            <button type="button" class="epp-pagination-button" data-pagination-page="last">Last</button>
+        </div>
+    </nav>
 </section>
 
 <div id="my-task-drawer-backdrop" class="epp-task-drawer-backdrop hidden"></div>

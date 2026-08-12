@@ -13,6 +13,7 @@ const PORTAL_API_BASE = "shayona.api.employee_portal.";
 
 const PORTAL_METHODS = {
     get_boot_data: `${PORTAL_API_BASE}employee_portal_get_boot_data`,
+    search_link: "frappe.desk.search.search_link",
     start_day: `${PORTAL_API_BASE}employee_portal_start_day`,
     start_work: `${PORTAL_API_BASE}employee_portal_start_work`,
     create_task: `${PORTAL_API_BASE}employee_portal_create_task`,
@@ -24,6 +25,11 @@ const PORTAL_METHODS = {
 
 const LOCATION_CACHE_MS = 60000;
 
+let projectAutocomplete = null;
+let taskAutocomplete = null;
+let activityTypeAutocomplete = null;
+let createTaskProjectAutocomplete = null;
+let createTaskTypeAutocomplete = null;
 
 /* ---------------------------------------------------------
    Basic Helpers
@@ -37,77 +43,52 @@ function pad(value) {
     return String(value).padStart(2, "0");
 }
 
-function toDate(value) {
-    if (!value) {
-        return null;
-    }
+function getDurationParts(totalSeconds) {
+    const safeSeconds = Math.max(
+        Math.floor(Number(totalSeconds) || 0),
+        0
+    );
 
-    if (value instanceof Date) {
-        return value;
-    }
-
-    return new Date(
-        String(value).replace(" ", "T")
+    return frappe.utils.seconds_to_duration(
+        safeSeconds,
+        { hide_days: 1 }
     );
 }
 
 function getElapsedSeconds(startValue) {
-    const startDate = toDate(startValue);
+    if (!startValue) {
+        return 0;
+    }
 
-    if (!startDate) {
+    const startTime =
+        frappe.datetime.convert_to_user_tz(
+            startValue,
+            false
+        );
+
+    if (!startTime.isValid()) {
         return 0;
     }
 
     return Math.max(
-        Math.floor(
-            (Date.now() - startDate.getTime()) / 1000
-        ),
+        moment().diff(startTime, "seconds"),
         0
     );
 }
 
 function formatSecondsToClock(totalSeconds) {
-    const safeSeconds = Math.max(
-        Math.floor(Number(totalSeconds) || 0),
-        0
-    );
-
-    const hours = Math.floor(safeSeconds / 3600);
-    const minutes = Math.floor(
-        (safeSeconds % 3600) / 60
-    );
-    const seconds = safeSeconds % 60;
+    const { hours, minutes, seconds } =
+        getDurationParts(totalSeconds);
 
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 function formatSecondsToHourMinute(totalSeconds) {
-    const safeSeconds = Math.max(
-        Math.floor(Number(totalSeconds) || 0),
-        0
-    );
-
-    const totalMinutes = Math.floor(
-        safeSeconds / 60
-    );
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
+    const { hours, minutes } =
+        getDurationParts(totalSeconds);
 
     return `${pad(hours)}:${pad(minutes)}`;
 }
-
-// function formatHoursToClock(hours) {
-//     const totalMinutes = Math.max(
-//         Math.round((Number(hours) || 0) * 60),
-//         0
-//     );
-
-//     const hourPart = Math.floor(totalMinutes / 60);
-//     const minutePart = totalMinutes % 60;
-
-//     return `${pad(hourPart)}:${pad(minutePart)}`;
-// }
 
 function formatHoursToClock(hours) {
     const totalSeconds = Math.max(
@@ -115,41 +96,25 @@ function formatHoursToClock(hours) {
         0
     );
 
-    const hourPart = Math.floor(totalSeconds / 3600);
-    const minutePart = Math.floor((totalSeconds % 3600) / 60);
-    const secondPart = totalSeconds % 60;
-
-    return `${pad(hourPart)}:${pad(minutePart)}:${pad(secondPart)}`;
-}
-
-function pad(value) {
-    return String(value).padStart(2, "0");
-}
-
-function escapeHtml(value) {
-    return String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+    return formatSecondsToClock(totalSeconds);
 }
 
 function formatTime(value) {
-    const date = value instanceof Date
-        ? value
-        : toDate(value);
-
-    if (!date || Number.isNaN(date.getTime())) {
+    if (!value) {
         return "--:--:--";
     }
 
-    return date.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-    }).toUpperCase();
+    const userTime =
+        frappe.datetime.convert_to_user_tz(
+            value,
+            false
+        );
+
+    if (!userTime.isValid()) {
+        return "--:--:--";
+    }
+
+    return userTime.format("hh:mm:ss A");
 }
 
 
@@ -158,7 +123,7 @@ function formatTime(value) {
 --------------------------------------------------------- */
 
 function updatePageClock() {
-    const now = new Date();
+    const now = frappe.datetime.now_datetime(true);
 
     const dateElement = getEl("today-date");
     const timeElement = getEl("current-time");
@@ -203,7 +168,9 @@ function getGreetingLabel(now) {
     return "Good Night";
 }
 
-function renderGreeting(now = new Date()) {
+function renderGreeting(
+    now = frappe.datetime.now_datetime(true)
+) {
     const title = getEl("greeting-title");
 
     if (!title) {
@@ -472,45 +439,6 @@ async function runAttendanceAction(
    Master Dropdowns
 --------------------------------------------------------- */
 
-async function loadTasksForProject(
-    project,
-    selectedTask = ""
-) {
-    const requestId =
-        ++state.taskLoadRequestId;
-
-    try {
-        const boot = await callPortal(
-            "get_boot_data",
-            { project }
-        );
-
-        if (
-            requestId
-            !== state.taskLoadRequestId
-        ) {
-            return;
-        }
-
-        state.boot.tasks = boot.tasks || [];
-
-        state.boot.selected_values = {
-            ...(state.boot.selected_values || {}),
-            project,
-            task: selectedTask || ""
-        };
-
-        renderTaskOptions(selectedTask);
-    } catch (error) {
-        frappe.msgprint(
-            getErrorMessage(
-                error,
-                "Unable to load Tasks."
-            )
-        );
-    }
-}
-
 function getFormValues() {
     return {
         project: getEl("project")?.value || "",
@@ -523,118 +451,404 @@ function getFormValues() {
     };
 }
 
-function renderSelectOptions(
-    elementId,
-    options,
-    selectedValue,
-    placeholder
-) {
-    const select = getEl(elementId);
+/* Deprecated copy retained only until the next portal asset cleanup. */
+/*
+function legacyQsoCreateAutocomplete({
+    inputId,
+    resultsId,
+    doctype,
+    referenceDoctype,
+    linkFieldname,
+    getQuery,
+    getFilters,
+    onSelect,
+}) {
+    const input = qsoGet(inputId);
+    const results = qsoGet(resultsId);
+    let requestId = 0;
+    let selectedValue = "";
 
-    if (!select) {
-        console.error(
-            `Select element not found: ${elementId}`
-        );
-        return;
+    function close() {
+        results.hidden = true;
+        input.setAttribute("aria-expanded", "false");
     }
 
-    select.innerHTML =
-        `<option value="">${placeholder}</option>`;
+    function render(options) {
+        results.replaceChildren();
 
-    (options || []).forEach((option) => {
-        const html =
-            document.createElement("option");
+        if (!options.length) {
+            const empty = document.createElement("div");
+            empty.className = "qso-results-message";
+            empty.textContent = __("No results found");
+            results.appendChild(empty);
+        } else {
+            options.forEach((option) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "qso-result-option";
+                button.setAttribute("role", "option");
 
-        html.value = option.value;
-        html.textContent = option.label;
+                const title = document.createElement("strong");
+                title.textContent = option.label || option.value;
+                button.appendChild(title);
 
-        if (
-            selectedValue
-            && selectedValue === option.value
-        ) {
-            html.selected = true;
+                const detailText = [
+                    option.value !== (option.label || option.value) ? option.value : "",
+                    option.description || "",
+                ].filter(Boolean).join(" · ");
+
+                if (detailText) {
+                    const detail = document.createElement("small");
+                    detail.textContent = detailText;
+                    button.appendChild(detail);
+                }
+
+                button.addEventListener("mousedown", (event) => {
+                    event.preventDefault();
+                    selectedValue = option.value;
+                    input.value = option.value;
+                    close();
+                    onSelect(option);
+                });
+                results.appendChild(button);
+            });
         }
 
-        select.appendChild(html);
+        results.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+    }
+
+    async function search() {
+        const currentRequest = ++requestId;
+        results.replaceChildren();
+        const loading = document.createElement("div");
+        loading.className = "qso-results-message";
+        loading.textContent = __("Searching...");
+        results.appendChild(loading);
+        results.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+
+        try {
+            const options = await qsoCall(QSO_METHODS.search, {
+                doctype,
+                txt: input.value.trim(),
+                query: getQuery?.() || "",
+                filters: getFilters?.() || {},
+                page_length: 10,
+                reference_doctype: referenceDoctype,
+                link_fieldname: linkFieldname,
+            });
+
+            if (currentRequest === requestId) {
+                render(options || []);
+            }
+        } catch (error) {
+            if (currentRequest === requestId) {
+                close();
+                qsoSetAlert(qsoErrorMessage(error, __("Unable to search.")), "error");
+            }
+        }
+    }
+
+    const debouncedSearch = qsoDebounce(search);
+    input.addEventListener("focus", search);
+    input.addEventListener("input", () => {
+        if (input.value.trim() !== selectedValue) {
+            selectedValue = "";
+            onSelect(null);
+        }
+        debouncedSearch();
     });
+    input.addEventListener("blur", () => window.setTimeout(close, 120));
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            close();
+        }
+    });
+
+    return {
+        clear() {
+            selectedValue = "";
+            input.value = "";
+            close();
+        },
+        setValue(value) {
+            selectedValue = value || "";
+            input.value = value || "";
+            close();
+        },
+    };
+}
+*/
+
+function createSearchLinkAutocomplete({
+    inputId,
+    valueInputId,
+    resultsId,
+    doctype,
+    referenceDoctype,
+    linkFieldname,
+    getFilters = () => ({}),
+    canSearch = () => true,
+    getDisplayLabel = (option) => option.label || option.value,
+    onSelect = () => {},
+    onClear = () => {},
+}) {
+    const input = getEl(inputId);
+    const valueInput = getEl(valueInputId);
+    const results = getEl(resultsId);
+    let requestId = 0;
+    let selectedValue = "";
+    let debounceTimer = null;
+
+    if (!input || !valueInput || !results) {
+        console.error(`Autocomplete elements missing for ${inputId}.`);
+        return {
+            clear() {},
+            setValue() {},
+            setDisabled() {},
+        };
+    }
+
+    const close = () => {
+        results.hidden = true;
+        input.setAttribute("aria-expanded", "false");
+    };
+
+    const renderMessage = (message) => {
+        results.replaceChildren();
+        const element = document.createElement("div");
+        element.className = "swp-link-message";
+        element.textContent = message;
+        results.appendChild(element);
+        results.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+    };
+
+    const renderResults = (options) => {
+        results.replaceChildren();
+
+        if (!options.length) {
+            renderMessage("No results found");
+            return;
+        }
+
+        options.forEach((option) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "swp-link-option";
+            button.setAttribute("role", "option");
+
+            const label = document.createElement("strong");
+            label.textContent = getDisplayLabel(option);
+            button.appendChild(label);
+
+            const description = option.description || option.value;
+            if (description && description !== getDisplayLabel(option)) {
+                const detail = document.createElement("small");
+                detail.textContent = description;
+                button.appendChild(detail);
+            }
+
+            button.addEventListener("mousedown", (event) => {
+                event.preventDefault();
+                selectedValue = option.value || "";
+                valueInput.value = selectedValue;
+                input.value = getDisplayLabel(option);
+                close();
+                onSelect(option);
+            });
+
+            results.appendChild(button);
+        });
+
+        results.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+    };
+
+    const search = async () => {
+        if (!canSearch()) {
+            close();
+            return;
+        }
+
+        const currentRequestId = ++requestId;
+        renderMessage("Searching...");
+
+        try {
+            const response = await frappe.call({
+                method: PORTAL_METHODS.search_link,
+                args: {
+                    doctype,
+                    txt: input.value.trim(),
+                    filters: getFilters() || {},
+                    page_length: 10,
+                    reference_doctype: referenceDoctype,
+                    link_fieldname: linkFieldname,
+                },
+            });
+
+            if (currentRequestId === requestId) {
+                renderResults(response.message || []);
+            }
+        } catch (error) {
+            if (currentRequestId !== requestId) {
+                return;
+            }
+
+            close();
+            frappe.msgprint(getErrorMessage(error, "Unable to search."));
+        }
+    };
+
+    const scheduleSearch = () => {
+        window.clearTimeout(debounceTimer);
+        debounceTimer = window.setTimeout(search, 250);
+    };
+
+    input.addEventListener("focus", search);
+    input.addEventListener("input", () => {
+        if (input.value.trim() !== selectedValue) {
+            selectedValue = "";
+            valueInput.value = "";
+            onClear();
+        }
+
+        scheduleSearch();
+    });
+    input.addEventListener("blur", () => window.setTimeout(close, 150));
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            close();
+        }
+    });
+
+    return {
+        clear({ notify = true } = {}) {
+            selectedValue = "";
+            valueInput.value = "";
+            input.value = "";
+            close();
+            if (notify) {
+                onClear();
+            }
+        },
+        setValue(value, label = value) {
+            selectedValue = value || "";
+            valueInput.value = selectedValue;
+            input.value = label || selectedValue;
+            close();
+        },
+        setDisabled(disabled) {
+            input.disabled = Boolean(disabled);
+            input.setAttribute("aria-disabled", String(Boolean(disabled)));
+            if (disabled) {
+                close();
+            }
+        },
+    };
 }
 
-function renderProjectOptions() {
-    const selectedProject =
-        state.boot?.selected_values?.project
-        || "";
+function initializeAutocompleteFields() {
+    projectAutocomplete = createSearchLinkAutocomplete({
+        inputId: "project-search",
+        valueInputId: "project",
+        resultsId: "project-results",
+        doctype: "Project",
+        referenceDoctype: "Timesheet Detail",
+        linkFieldname: "project",
+        getFilters: () => ({ status: "Open" }),
+        onSelect: () => {
+            taskAutocomplete.clear({ notify: false });
+            taskAutocomplete.setDisabled(!getEl("project").value);
+        },
+        onClear: () => {
+            taskAutocomplete.clear({ notify: false });
+            taskAutocomplete.setDisabled(true);
+        },
+    });
 
-    renderSelectOptions(
-        "project",
-        state.boot?.projects || [],
-        selectedProject,
-        "Select Project"
+    taskAutocomplete = createSearchLinkAutocomplete({
+        inputId: "task-search",
+        valueInputId: "task",
+        resultsId: "task-results",
+        doctype: "Task",
+        referenceDoctype: "Timesheet Detail",
+        linkFieldname: "task",
+        canSearch: () => Boolean(getEl("project")?.value),
+        getFilters: () => ({
+            project: getEl("project")?.value || "",
+            status: ["not in", ["Cancelled", "Completed"]],
+            is_group: 0,
+        }),
+    });
+
+    activityTypeAutocomplete = createSearchLinkAutocomplete({
+        inputId: "activity-type-search",
+        valueInputId: "activity-type",
+        resultsId: "activity-type-results",
+        doctype: "Activity Type",
+        referenceDoctype: "Timesheet Detail",
+        linkFieldname: "activity_type",
+    });
+
+    createTaskProjectAutocomplete = createSearchLinkAutocomplete({
+        inputId: "create-task-project-search",
+        valueInputId: "create-task-project",
+        resultsId: "create-task-project-results",
+        doctype: "Project",
+        referenceDoctype: "Task",
+        linkFieldname: "project",
+        getFilters: () => ({ status: "Open" }),
+    });
+
+    createTaskTypeAutocomplete = createSearchLinkAutocomplete({
+        inputId: "create-task-type-search",
+        valueInputId: "create-task-type",
+        resultsId: "create-task-type-results",
+        doctype: "Task Type",
+        referenceDoctype: "Task",
+        linkFieldname: "type",
+    });
+
+    taskAutocomplete.setDisabled(true);
+}
+
+function syncAutocompleteValues() {
+    const selected = state.boot?.selected_values || {};
+    const current = state.boot?.current_work_session || {};
+
+    projectAutocomplete?.setValue(
+        selected.project || "",
+        current.project_label || selected.project || ""
     );
-}
-
-function renderTaskOptions(
-    forcedSelectedTask = ""
-) {
-    const selectedTask =
-        forcedSelectedTask
-        || state.boot?.selected_values?.task
-        || "";
-
-    renderSelectOptions(
-        "task",
-        state.boot?.tasks || [],
-        selectedTask,
-        "Select Task"
+    taskAutocomplete?.setValue(
+        selected.task || "",
+        current.task_label || selected.task || ""
     );
-}
-
-function renderActivityTypeOptions() {
-    const selectedActivity =
-        state.boot?.selected_values
-            ?.activity_type
-        || "";
-
-    renderSelectOptions(
-        "activity-type",
-        state.boot?.activity_types || [],
-        selectedActivity,
-        "Select Activity"
+    activityTypeAutocomplete?.setValue(
+        selected.activity_type || "",
+        selected.activity_type || ""
     );
+    taskAutocomplete?.setDisabled(!selected.project);
 }
-
 
 /* ---------------------------------------------------------
    Create Task Modal
 --------------------------------------------------------- */
 
-function renderCreateTaskModalOptions() {
-    renderSelectOptions(
-        "create-task-project",
-        state.boot?.projects || [],
-        "",
-        "Select Project (Optional)"
-    );
-
-    renderSelectOptions(
-        "create-task-type",
-        state.boot?.task_types || [],
-        "",
-        "Select Task Type (Optional)"
-    );
-}
-
 function resetCreateTaskModal() {
-    renderCreateTaskModalOptions();
-
     const selectedProject =
         state.boot?.selected_values?.project
         || getEl("project")?.value
         || "";
 
     getEl("create-task-title").value = "";
-    getEl("create-task-project").value =
-        selectedProject;
-    getEl("create-task-type").value = "";
+    createTaskProjectAutocomplete?.setValue(
+        selectedProject,
+        selectedProject
+    );
+    createTaskTypeAutocomplete?.clear({ notify: false });
 }
 
 function openCreateTaskDialog() {
@@ -1452,7 +1666,7 @@ function renderWorkSessions() {
             <div class="swp-log-item">
                 <div class="swp-log-top">
                     <h4>
-                        ${escapeHtml(
+                        ${frappe.utils.escape_html(
             session.task_label
             || session.activity_type
             || "Work Session"
@@ -1469,7 +1683,7 @@ function renderWorkSessions() {
                 <div class="swp-log-meta">
                     <span>
                         Project:
-                        ${escapeHtml(
+                        ${frappe.utils.escape_html(
             session.project_label
             || "-"
         )}
@@ -1477,7 +1691,7 @@ function renderWorkSessions() {
 
                     <span>
                         Activity:
-                        ${escapeHtml(
+                        ${frappe.utils.escape_html(
             session.activity_type
             || "-"
         )}
@@ -1499,7 +1713,7 @@ function renderWorkSessions() {
 
                     <span>
                         Description:
-                        ${escapeHtml(
+                        ${frappe.utils.escape_html(
                 session.description
                 || "-"
             )}
@@ -1575,7 +1789,7 @@ function renderBreakLogs() {
 
                     <span>
                         Status:
-                        ${escapeHtml(
+                        ${frappe.utils.escape_html(
                 breakRow.status
                 || "Open"
             )}
@@ -1683,9 +1897,7 @@ function renderPage() {
     renderSummary();
     renderGreeting();
 
-    renderProjectOptions();
-    renderTaskOptions();
-    renderActivityTypeOptions();
+    syncAutocompleteValues();
     renderSelectedValues();
 
     renderCurrentTaskCard();
@@ -1786,27 +1998,6 @@ async function loadBootData() {
 --------------------------------------------------------- */
 
 function bindEvents() {
-    getEl("project")
-        ?.addEventListener(
-            "change",
-            async (event) => {
-                const selectedProject =
-                    event.target.value;
-
-                await loadTasksForProject(
-                    selectedProject,
-                    ""
-                );
-
-                const taskSelect =
-                    getEl("task");
-
-                if (taskSelect) {
-                    taskSelect.value = "";
-                }
-            }
-        );
-
     getEl("btn-create-task")
         ?.addEventListener(
             "click",
@@ -1961,6 +2152,7 @@ document.addEventListener(
                 1000
             );
 
+        initializeAutocompleteFields();
         bindEvents();
         await loadBootData();
     }

@@ -1,7 +1,19 @@
+import mimetypes
+import os
+
 import frappe
 import frappe.utils
 
-from frappe.utils import get_fullname
+from frappe.core.api.file import get_max_file_size
+from frappe.desk.doctype.notification_log.notification_log import (
+    enqueue_create_notification,
+)
+from frappe.handler import ALLOWED_MIMETYPES
+from frappe.utils import get_fullname, get_url_to_form
+from shayona.api.employee_portal import (
+    _start_employee_work_session,
+    _stop_employee_work_session,
+)
 from shayona.permissions.project_portal import (
     PROJECT_PORTAL_ALLOWED_ROLES,
     PROJECT_PORTAL_BYPASS_ROLES,
@@ -36,6 +48,17 @@ PORTAL_TASK_MANAGER_ROLES = frozenset(
 # These fixed ranges keep the portal report bounded while covering the employee timesheet view.
 PORTAL_TIMESHEET_PERIODS = frozenset({"Today", "This Week", "This Month"})
 
+# Task updates reuse the standard Frappe Comment timeline rather than a parallel DocType.
+PORTAL_TASK_UPDATE_LIMIT = 30
+PORTAL_TASK_UPDATE_MAX_LENGTH = 3000
+PORTAL_TASK_UPDATE_OPTIONAL_FIELD_MAX_LENGTH = 1500
+
+# Portal alerts use the standard Notification Log and are kept separate from unrelated app alerts.
+PORTAL_NOTIFICATION_APP = "shayona"
+PORTAL_NOTIFICATION_TYPE = "Alert"
+PORTAL_NOTIFICATION_LIMIT = 30
+PORTAL_PROJECT_MANAGER_ROLES = frozenset({"Projects Manager", "System Manager"})
+
 
 def _get_portal_timesheet_date_range(period):
     # This returns server-derived dates so the browser cannot request an unbounded report range.
@@ -48,6 +71,19 @@ def _get_portal_timesheet_date_range(period):
         return frappe.utils.get_first_day(today), frappe.utils.get_last_day(today)
 
     return frappe.utils.add_days(today, -today.weekday()), today
+
+
+def _get_portal_total_records(doctype, filters, or_filters=None):
+    # This uses the same constrained filters as the page query so footer totals stay accurate.
+    rows = frappe.db.get_list(
+        doctype,
+        filters=filters,
+        or_filters=or_filters or {},
+        fields=[{"COUNT": "name", "as": "total_records"}],
+        limit_page_length=1,
+    )
+
+    return frappe.utils.cint(rows[0].total_records) if rows else 0
 
 
 def _get_portal_task_fields(task_meta):
@@ -159,6 +195,328 @@ def _validate_portal_task_owner(task_owner):
         )
 
 
+def _get_portal_active_work_session(user):
+    # This deliberately reads the employee's draft Timesheet instead of keeping
+    # browser timer state, so task controls always reflect the authoritative row.
+    employee_name = frappe.db.get_value(
+        "Employee", {"user_id": user, "status": "Active"}, "name"
+    )
+
+    if not employee_name:
+        return None
+
+    timesheet_rows = frappe.db.get_all(
+        "Timesheet",
+        filters={
+            "employee": employee_name,
+            "start_date": frappe.utils.today(),
+            "docstatus": 0,
+        },
+        fields=["name"],
+        order_by="creation desc",
+        limit_page_length=1,
+    )
+
+    if not timesheet_rows:
+        return None
+
+    timesheet = frappe.get_doc("Timesheet", timesheet_rows[0].name)
+
+    for row in timesheet.time_logs:
+        if not row.completed and row.from_time and not row.to_time:
+            return {
+                "timesheet": timesheet.name,
+                "time_log": row.name,
+                "project": row.project or "",
+                "task": row.task or "",
+                "from_time": row.from_time,
+            }
+
+    return None
+
+
+def _get_owned_portal_task_for_work(user, task_name, task_meta):
+    # Task ownership is checked before loading the document and again by the
+    # write endpoint before save, matching the existing portal task update flow.
+    if not task_meta.has_field("custom_task_owner"):
+        frappe.throw("Task field custom_task_owner is required for My Tasks.")
+
+    task_rows = frappe.db.get_list(
+        "Task",
+        filters={"name": task_name, "custom_task_owner": user, "is_group": 0},
+        fields=["name"],
+        limit_page_length=1,
+    )
+
+    if not task_rows:
+        frappe.throw("Task does not exist or you do not have permission.")
+
+    task_doc = frappe.get_doc("Task", task_name)
+
+    if task_doc.custom_task_owner != user:
+        frappe.throw("Task Owner changed. Refresh the task before continuing.")
+
+    return task_doc
+
+
+def _get_portal_task_updates(task_name):
+    # This returns only human comments; attachment/system comments remain in Desk.
+    comment_rows = frappe.db.get_all(
+        "Comment",
+        filters={
+            "reference_doctype": "Task",
+            "reference_name": task_name,
+            "comment_type": "Comment",
+        },
+        fields=["name", "content", "comment_by", "owner", "creation"],
+        order_by="creation desc",
+        limit_page_length=PORTAL_TASK_UPDATE_LIMIT,
+    )
+
+    return [
+        {
+            "name": row.name,
+            # Portal text is rendered as text, not Desk rich HTML.
+            "content": frappe.utils.strip_html(row.content or "").strip(),
+            "author": row.comment_by or row.owner or "Employee",
+            "created_at": row.creation,
+        }
+        for row in comment_rows
+    ]
+
+
+def _get_portal_task_attachments(task_name):
+    # Files are private and attached to the same Task, so standard File access applies.
+    attachment_rows = frappe.db.get_all(
+        "File",
+        filters={"attached_to_doctype": "Task", "attached_to_name": task_name},
+        fields=["name", "file_name", "file_url", "creation"],
+        order_by="creation desc",
+        limit_page_length=PORTAL_TASK_UPDATE_LIMIT,
+    )
+
+    return [
+        {
+            "name": row.name,
+            "file_name": row.file_name or row.name,
+            "file_url": row.file_url or "",
+            "created_at": row.creation,
+        }
+        for row in attachment_rows
+    ]
+
+
+def _clean_portal_task_update_text(value, field_label, max_length, required=False):
+    # Updates are stored as plain text so untrusted markup never becomes portal HTML.
+    text = frappe.utils.strip_html(frappe.utils.cstr(value or "")).strip()
+
+    if required and not text:
+        frappe.throw("{0} is required.".format(field_label))
+
+    if len(text) > max_length:
+        frappe.throw(
+            "{0} cannot exceed {1} characters.".format(field_label, max_length)
+        )
+
+    return text
+
+
+def _get_portal_project_manager_recipients(project_name, exclude_user=""):
+    # Project User is the only standard Project-level user assignment. Restricting
+    # recipients to its manager-role members avoids alerting every global manager.
+    if not project_name:
+        return []
+
+    project = frappe.db.get_value(
+        "Project", project_name, ["name", "owner"], as_dict=True
+    )
+
+    if not project:
+        return []
+
+    project_user_rows = frappe.get_all(
+        "Project User",
+        filters={"parent": project_name, "parenttype": "Project"},
+        fields=["user"],
+    )
+    project_users = {
+        row.user for row in project_user_rows if frappe.utils.cstr(row.user).strip()
+    }
+    manager_users = set()
+
+    if project_users:
+        manager_users = set(
+            frappe.get_all(
+                "Has Role",
+                filters={
+                    "parent": ["in", sorted(project_users)],
+                    "role": ["in", sorted(PORTAL_PROJECT_MANAGER_ROLES)],
+                },
+                pluck="parent",
+            )
+        )
+
+    # Older Projects may not have a manager-role user in their website Users table.
+    # The Project creator is the narrowest native fallback, rather than all managers.
+    recipient_users = manager_users or {project.owner}
+    recipient_users.discard(exclude_user)
+
+    if not recipient_users:
+        return []
+
+    user_rows = frappe.get_all(
+        "User",
+        filters={"name": ["in", sorted(recipient_users)], "enabled": 1},
+        fields=["name", "email"],
+    )
+
+    return [
+        row.email
+        for row in user_rows
+        if row.email and row.name != exclude_user and row.email != exclude_user
+    ]
+
+
+def _enqueue_portal_task_notification(
+    recipients,
+    task,
+    title,
+    description,
+    from_user="Administrator",
+    dedupe_on=None,
+):
+    # Notification Log handles recipient preferences, realtime delivery, and audit history.
+    if not recipients:
+        return
+
+    enqueue_create_notification(
+        recipients,
+        {
+            "type": PORTAL_NOTIFICATION_TYPE,
+            "title": title,
+            "description": description,
+            "document_type": "Task",
+            "document_name": task.name,
+            "link": get_url_to_form("Task", task.name),
+            "app": PORTAL_NOTIFICATION_APP,
+            "from_user": from_user,
+        },
+        dedupe_on=dedupe_on,
+    )
+
+
+def _notify_portal_project_managers_about_blocker(task, blocker, reported_by):
+    # A blocker is visible to only the assigned Project managers, with project owner fallback.
+    recipients = _get_portal_project_manager_recipients(
+        task.project, exclude_user=reported_by
+    )
+
+    _enqueue_portal_task_notification(
+        recipients,
+        task,
+        "Blocker reported · {0}".format(task.name),
+        "{0} reported a blocker on {1}: {2}".format(
+            get_fullname(reported_by), task.subject or task.name, blocker
+        ),
+        from_user=reported_by,
+    )
+
+
+def send_employee_project_portal_due_task_reminders():
+    # The daily scheduler is idempotent: each Task/category/day shares one Notification Log.
+    task_meta = frappe.get_meta("Task")
+
+    if not (
+        task_meta.has_field("custom_task_owner")
+        and task_meta.has_field("exp_end_date")
+    ):
+        return
+
+    today = frappe.utils.getdate(frappe.utils.today())
+    tomorrow = frappe.utils.add_days(today, 1)
+    reminder_end = frappe.utils.get_datetime("{0} 23:59:59".format(tomorrow))
+    task_rows = frappe.get_all(
+        "Task",
+        filters={
+            "is_group": 0,
+            "custom_task_owner": ["is", "set"],
+            "status": ["not in", PORTAL_CLOSED_TASK_STATUSES],
+            "exp_end_date": ["<=", reminder_end],
+        },
+        fields=["name", "subject", "exp_end_date", "custom_task_owner"],
+    )
+
+    for task in task_rows:
+        due_date = frappe.utils.getdate(task.exp_end_date)
+
+        if due_date < today:
+            reminder_label = "Overdue task"
+            due_message = "is overdue"
+        elif due_date == today:
+            reminder_label = "Due today"
+            due_message = "is due today"
+        elif due_date == tomorrow:
+            reminder_label = "Due tomorrow"
+            due_message = "is due tomorrow"
+        else:
+            continue
+
+        reminder_date = frappe.utils.formatdate(today)
+        _enqueue_portal_task_notification(
+            [task.custom_task_owner],
+            task,
+            "{0} · {1}".format(reminder_label, reminder_date),
+            "{0} ({1}) {2}. Due date: {3}.".format(
+                task.subject or task.name,
+                task.name,
+                due_message,
+                frappe.utils.formatdate(due_date),
+            ),
+            dedupe_on=["title", "document_name", "app"],
+        )
+
+
+def _get_project_portal_notifications(user):
+    # The app filter prevents the portal panel from exposing a user's unrelated Desk alerts.
+    notification_rows = frappe.db.get_all(
+        "Notification Log",
+        filters={"for_user": user, "app": PORTAL_NOTIFICATION_APP},
+        fields=[
+            "name",
+            "title",
+            "subject",
+            "description",
+            "document_type",
+            "document_name",
+            "link",
+            "read",
+            "creation",
+        ],
+        order_by="creation desc",
+        limit_page_length=PORTAL_NOTIFICATION_LIMIT,
+    )
+
+    return {
+        "notifications": [
+            {
+                "name": row.name,
+                "title": row.title or row.subject or "Project Portal update",
+                "description": frappe.utils.strip_html(row.description or "").strip(),
+                "document_type": row.document_type or "",
+                "document_name": row.document_name or "",
+                "link": row.link or "",
+                "read": frappe.utils.cint(row.read),
+                "created_at": row.creation,
+            }
+            for row in notification_rows
+        ],
+        "unread_count": frappe.db.count(
+            "Notification Log",
+            filters={"for_user": user, "app": PORTAL_NOTIFICATION_APP, "read": 0},
+        ),
+    }
+
+
 def _get_my_task_detail_payload(task_row, task_meta, user):
     # This creates the read and edit data for one Task that is owned by the logged-in user.
     project_name = task_row.project or ""
@@ -207,6 +565,9 @@ def _get_my_task_detail_payload(task_row, task_meta, user):
         "expected_time": task_row.get("expected_time") or 0,
         "actual_time": task_row.get("actual_time") or 0,
         "task_owner": task_row.get("custom_task_owner") or "",
+        "active_work": _get_portal_active_work_session(user),
+        "updates": _get_portal_task_updates(task_row.name),
+        "attachments": _get_portal_task_attachments(task_row.name),
         "editable_fields": editable_fields,
         "edit_options": {
             "statuses": status_options,
@@ -701,6 +1062,8 @@ def employee_project_portal_get_projects():
             "page_length": page_length,
             "has_previous": page > 1,
             "has_more": False,
+            "total_records": 0,
+            "total_pages": 0,
         },
         "projects": [],
     }
@@ -803,6 +1166,23 @@ def employee_project_portal_get_projects():
         #
         # Fetch one extra row to determine has_more.
         # -----------------------------------------------------
+
+        total_records = _get_portal_total_records(
+            "Project", project_filters, project_or_filters
+        )
+        total_pages = (total_records + page_length - 1) // page_length
+
+        page = min(page, total_pages or 1)
+
+        limit_start = (page - 1) * page_length
+        response_data["pagination"].update(
+            {
+                "page": page,
+                "has_previous": page > 1,
+                "total_records": total_records,
+                "total_pages": total_pages,
+            }
+        )
 
         project_rows = frappe.db.get_list(
             "Project",
@@ -1057,6 +1437,13 @@ def employee_project_portal_get_project_workspace():
             "subject": ["like", search_value],
         }
 
+    total_records = _get_portal_total_records(
+        "Task", task_filters, task_or_filters
+    )
+    total_pages = (total_records + page_length - 1) // page_length
+
+    page = min(page, total_pages or 1)
+
     # These fields are used by the read-only task table and are checked for compatibility.
     task_fields = ["name", "subject", "status", "modified"]
 
@@ -1147,6 +1534,8 @@ def employee_project_portal_get_project_workspace():
             "page_length": page_length,
             "has_previous": page > 1,
             "has_more": has_more,
+            "total_records": total_records,
+            "total_pages": total_pages,
         },
     }
 
@@ -1208,6 +1597,13 @@ def employee_project_portal_get_my_tasks():
             "subject": ["like", search_value],
         }
 
+    total_records = _get_portal_total_records(
+        "Task", task_filters, task_or_filters
+    )
+    total_pages = (total_records + page_length - 1) // page_length
+
+    page = min(page, total_pages or 1)
+
     task_rows = frappe.db.get_list(
         "Task",
         filters=task_filters,
@@ -1261,6 +1657,8 @@ def employee_project_portal_get_my_tasks():
             "page_length": page_length,
             "has_previous": page > 1,
             "has_more": has_more,
+            "total_records": total_records,
+            "total_pages": total_pages,
         },
     }
 
@@ -1311,6 +1709,9 @@ def employee_project_portal_get_my_timesheets():
             "page_length": page_length,
             "has_previous": page > 1,
             "has_more": False,
+            "total_records": 0,
+            "total_pages": 0,
+            "is_truncated": False,
         },
     }
 
@@ -1364,10 +1765,24 @@ def employee_project_portal_get_my_timesheets():
     if is_truncated:
         summary_rows = summary_rows[:500]
 
+    total_records = len(summary_rows)
+    total_pages = (total_records + page_length - 1) // page_length
+
+    page = min(page, total_pages or 1)
     page_start = (page - 1) * page_length
+
     page_rows = summary_rows[page_start : page_start + page_length]
     # Do not expose an empty page after the bounded result set; truncation is reported separately.
-    response_data["pagination"]["has_more"] = len(summary_rows) > page_start + page_length
+    response_data["pagination"].update(
+        {
+            "page": page,
+            "has_previous": page > 1,
+            "has_more": total_records > page_start + page_length,
+            "total_records": total_records,
+            "total_pages": total_pages,
+            "is_truncated": is_truncated,
+        }
+    )
 
     timesheet_names = [row.name for row in summary_rows]
     time_log_rows = []
@@ -1595,8 +2010,268 @@ def employee_project_portal_get_task_board():
         "filters": {"search": search},
         "statuses": board_statuses,
         "tasks": tasks,
+        "active_work": _get_portal_active_work_session(user),
         "is_truncated": is_truncated,
         "board_limit": board_limit,
+    }
+
+
+@frappe.whitelist()
+def employee_project_portal_start_my_task_work():
+    # This starts one owned Task through the existing Employee Portal Timesheet flow.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+
+    task_name = frappe.utils.cstr(frappe.form_dict.get("task") or "").strip()
+
+    if not task_name:
+        frappe.throw("Please select a Task.")
+
+    task_meta = frappe.get_meta("Task")
+    task_doc = _get_owned_portal_task_for_work(user, task_name, task_meta)
+
+    if task_doc.status in PORTAL_CLOSED_TASK_STATUSES:
+        frappe.throw("Completed or cancelled Tasks cannot be started.")
+
+    status_options = set(_get_task_select_options(task_meta, "status"))
+
+    if "Working" not in status_options:
+        frappe.throw("Task status Working is required before work can be started.")
+
+    # The shared helper performs attendance checks, validates the Task/Project,
+    # ensures only one session runs, and persists through normal Timesheet hooks.
+    response_data = _start_employee_work_session(
+        user=user,
+        project=task_doc.project or "",
+        task=task_doc.name,
+    )
+
+    # Employees normally lack Task write permission. This owner-scoped endpoint
+    # re-checks ownership, changes only status, and still runs normal Task hooks.
+    if task_doc.custom_task_owner != user:
+        frappe.throw("Task Owner changed. Refresh the task before continuing.")
+
+    if task_doc.status != "Working":
+        task_doc.status = "Working"
+        task_doc.save(ignore_permissions=True)
+
+    frappe.response["message"] = response_data
+
+
+@frappe.whitelist()
+def employee_project_portal_stop_my_task_work():
+    # This can stop only the active session that belongs to the selected owned Task.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+
+    task_name = frappe.utils.cstr(frappe.form_dict.get("task") or "").strip()
+
+    if not task_name:
+        frappe.throw("Please select a Task.")
+
+    task_meta = frappe.get_meta("Task")
+    _get_owned_portal_task_for_work(user, task_name, task_meta)
+
+    frappe.response["message"] = _stop_employee_work_session(
+        user, expected_task=task_name
+    )
+
+
+@frappe.whitelist()
+def employee_project_portal_add_task_update():
+    # This adds an auditable progress update without overwriting Task description.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+
+    task_name = frappe.utils.cstr(frappe.form_dict.get("task") or "").strip()
+
+    if not task_name:
+        frappe.throw("Please select a Task.")
+
+    task_meta = frappe.get_meta("Task")
+    task_doc = _get_owned_portal_task_for_work(user, task_name, task_meta)
+    work_completed = _clean_portal_task_update_text(
+        frappe.form_dict.get("work_completed"),
+        "Work completed",
+        PORTAL_TASK_UPDATE_MAX_LENGTH,
+        required=True,
+    )
+    blocker = _clean_portal_task_update_text(
+        frappe.form_dict.get("blocker"),
+        "Blocker",
+        PORTAL_TASK_UPDATE_OPTIONAL_FIELD_MAX_LENGTH,
+    )
+    next_step = _clean_portal_task_update_text(
+        frappe.form_dict.get("next_step"),
+        "Next step",
+        PORTAL_TASK_UPDATE_OPTIONAL_FIELD_MAX_LENGTH,
+    )
+
+    status = frappe.utils.cstr(frappe.form_dict.get("status") or "").strip()
+    progress_value = frappe.form_dict.get("progress")
+    has_task_changes = False
+
+    if status:
+        status_options = set(_get_task_select_options(task_meta, "status"))
+
+        if status not in status_options or status == "Template":
+            frappe.throw("Please select a valid Task status.")
+
+        if task_doc.status != status:
+            task_doc.status = status
+            has_task_changes = True
+
+    if progress_value not in (None, ""):
+        progress = frappe.utils.flt(progress_value)
+
+        if progress < 0 or progress > 100:
+            frappe.throw("Task progress must be between 0 and 100.")
+
+        if frappe.utils.flt(task_doc.progress) != progress:
+            task_doc.progress = progress
+            has_task_changes = True
+
+    # Mirror the existing owner-edit endpoint when an update completes a Task.
+    if task_doc.status == "Completed" and not task_doc.completed_on:
+        task_doc.completed_on = frappe.utils.today()
+        has_task_changes = True
+
+    if has_task_changes:
+        # The endpoint already enforced portal role and ownership before this scoped save.
+        task_doc.save(ignore_permissions=True)
+
+    update_sections = ["Work completed:\n{0}".format(work_completed)]
+
+    if blocker:
+        update_sections.append("Blocker:\n{0}".format(blocker))
+
+    if next_step:
+        update_sections.append("Next step:\n{0}".format(next_step))
+
+    comment = task_doc.add_comment(
+        "Comment",
+        text="\n\n".join(update_sections),
+        comment_email=user,
+        comment_by=get_fullname(user),
+    )
+
+    if blocker:
+        _notify_portal_project_managers_about_blocker(task_doc, blocker, user)
+
+    frappe.response["message"] = {
+        "success": True,
+        "update": {"name": comment.name},
+        "task": _get_my_task_detail_payload(task_doc, task_meta, user),
+    }
+
+
+@frappe.whitelist()
+def employee_project_portal_get_notifications():
+    # This exposes only the logged-in user's Shayona portal alerts.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+    frappe.response["message"] = _get_project_portal_notifications(user)
+
+
+@frappe.whitelist(methods=["POST"])
+def employee_project_portal_mark_notifications_read():
+    # This mirrors Frappe's standard bulk read update, scoped to the portal app.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+    frappe.db.set_value(
+        "Notification Log",
+        {"for_user": user, "app": PORTAL_NOTIFICATION_APP, "read": 0},
+        "read",
+        1,
+        update_modified=False,
+    )
+    frappe.response["message"] = {"unread_count": 0}
+
+
+@frappe.whitelist(methods=["POST"])
+def employee_project_portal_upload_task_attachment():
+    # This keeps website users within the Task-owner boundary that generic File upload cannot provide.
+    user = frappe.session.user
+
+    if user == "Guest":
+        frappe.throw("Please login to continue.")
+
+    require_project_portal_access(user)
+
+    task_name = frappe.utils.cstr(frappe.form_dict.get("task") or "").strip()
+
+    if not task_name:
+        frappe.throw("Please select a Task.")
+
+    task_meta = frappe.get_meta("Task")
+    _get_owned_portal_task_for_work(user, task_name, task_meta)
+
+    uploaded_file = frappe.request.files.get("file")
+
+    if not uploaded_file or not uploaded_file.filename:
+        frappe.throw("Please select an attachment.")
+
+    file_name = os.path.basename(frappe.utils.cstr(uploaded_file.filename)).strip()
+
+    if not file_name:
+        frappe.throw("Please select a valid attachment.")
+
+    mime_type = mimetypes.guess_type(file_name)[0]
+
+    if mime_type not in ALLOWED_MIMETYPES:
+        frappe.throw(
+            "Only images, PDF, TXT, CSV, Microsoft Office, and supported video files can be attached."
+        )
+
+    max_file_size = get_max_file_size()
+    content = uploaded_file.stream.read(max_file_size + 1)
+
+    if len(content) > max_file_size:
+        frappe.throw(
+            "Attachment exceeds the maximum allowed size of {0} MB.".format(
+                frappe.utils.flt(max_file_size / (1024 * 1024), 1)
+            )
+        )
+
+    file_doc = frappe.get_doc(
+        {
+            "doctype": "File",
+            "attached_to_doctype": "Task",
+            "attached_to_name": task_name,
+            "file_name": file_name,
+            "is_private": 1,
+            "content": content,
+        }
+    ).insert(ignore_permissions=True)
+
+    frappe.response["message"] = {
+        "success": True,
+        "attachment": {
+            "name": file_doc.name,
+            "file_name": file_doc.file_name,
+            "file_url": file_doc.file_url,
+            "created_at": file_doc.creation,
+        },
     }
 
 

@@ -1,440 +1,65 @@
-# Frappe and ERPNext Project Instructions
+# Frappe Repository Instructions
 
-These instructions apply to Frappe Framework, ERPNext, and official Frappe application work in this repository.
+These are the always-on instructions for work in this repository. Keep this file intentionally small.
 
-They supplement the global coding-agent instructions.
+## Always-on rules
 
-## 1. Confirm the Exact Frappe Environment
+- Inspect the relevant existing implementation before editing.
+- Use repository evidence instead of assumptions.
+- Prefer existing Frappe/project patterns over new abstractions.
+- Make the smallest correct change and do not modify unrelated code.
+- Preserve backward compatibility unless the task explicitly requires a breaking change.
+- For Frappe behavior that is version-sensitive or uncertain, verify the exact installed source/version or matching official Frappe/ERPNext source before deciding.
+- Respect permissions, document lifecycle, transactions, and existing hooks when they are relevant to the task.
+- Do not use `ignore_permissions=True`, direct SQL, or direct database updates merely because they are shorter.
+- Do not run state-changing Bench/Frappe operations without explicit user permission. This includes `bench build`, `bench migrate`, `bench update`, `bench restart`, cache-clearing commands, app install/uninstall, patch execution, restore, site creation/deletion, and production process changes.
+- Do not perform destructive Git, database, site, or production operations without explicit permission.
+- Run only the smallest relevant verification available. Never claim a test/build/check passed unless it was actually run.
+- Inspect the final diff for unintended changes before reporting completion.
+- Keep the final response concise: result, files changed, verification, and only important risks/notes.
 
-Before giving a repository-specific solution, confirm where relevant:
+## Context budget
 
-* Current Git branch
-* Frappe version
-* ERPNext version
-* Relevant official app version
-* Custom app version
-* Installed applications
-* Site context
-* Whether the code belongs to Frappe core, ERPNext, an official app, a custom app, a Server Script, Client Script, Report, Print Format, Web Page, or another Desk configuration
-* Whether an override, hook, monkey patch, custom field, property setter, or custom DocType is involved
+Do NOT read every file under `docs/ai/`.
 
-Do not assume that behaviour from another Frappe version applies to the current version.
+For a normal small task, read no AI guidance document unless the task clearly matches one of the triggers below. Inspect the target code and nearby existing patterns first.
 
-When framework behaviour is uncertain, verify it from:
+When extra guidance is needed, load the smallest relevant set, normally zero or one document. Load multiple documents only when the task genuinely spans multiple risk areas.
 
-* The exact installed source code
-* The matching official branch or tag
-* Official Frappe or ERPNext documentation
-* Existing project usage
+Never load `docs/ai/archive/` during normal work.
 
----
+## Conditional guidance
 
-## 2. Understand the Real DocType Lifecycle
+Read only when the task matches:
 
-Before suggesting validation or logic for a DocType, determine its actual business role.
+- DocType lifecycle, controller hooks, server validation, permissions, whitelisted APIs, document-vs-database updates, configuration:
+  `docs/ai/FRAPPE_DOCTYPE_SERVER.md`
 
-Possible classifications include:
+- Query Report, Script Report, Query Builder, SQL, aggregation, joins, totals:
+  `docs/ai/REPORTS_QUERIES.md`
 
-* Master or setup data
-* Business transaction
-* Configuration
-* Child table
-* Temporary or staging data
-* System-generated record
-* Imported or synchronized record
-* Derived or calculated data
-* Processing queue
-* Integration record
-* Log, audit, or tracking data
-
-Confirm who or what creates and updates it:
-
-* Desk user
-* Website user
-* API
-* Import
-* Scheduler
-* Background job
-* External device
-* External integration
-* Another DocType
-* Document submission or cancellation
-* Automated calculation
-* Patch or migration
-
-Confirm whether the flow is:
-
-* Manual
-* Automated
-* Both manual and automated
-* Interactive
-* Unattended
-
-Trace:
-
-* What occurs before the DocType
-* How it is created
-* Which controller events run
-* Which hooks run
-* Which linked records are read or written
-* What occurs after processing
-* Whether failure blocks a user or an automated process
-
-Do not treat every DocType as a manually entered Desk form.
-
----
-
-## 3. Lifecycle-Aware Error Handling
-
-Before using:
-
-* `frappe.throw`
-* Confirmation dialogs
-* Popups
-* Mandatory manual correction
-* Desk-only interaction
-* Client-side validation
-
-Confirm whether a user is present during processing.
-
-For interactive business transactions, blocking validation may be appropriate.
-
-For schedulers, integrations, imports, devices, APIs, queues, and background jobs, consider safer unattended handling such as:
-
-* Structured error logging
-* Status fields
-* Failure reason fields
-* Retry handling
-* Skipped-record reporting
-* Processing summaries
-* Idempotent retries
-* Recoverable states
-* Administrator notifications
-
-Do not introduce an interactive dependency into an unattended workflow.
-
-Explain how the DocType classification affects the proposed error handling.
-
----
-
-## 4. Inspect All Relevant Frappe Extension Points
-
-Before deciding where logic belongs, inspect where relevant:
-
-* DocType controller
-* `validate`
-* `before_validate`
-* `before_insert`
-* `after_insert`
-* `before_save`
-* `on_update`
-* `before_submit`
-* `on_submit`
-* `before_cancel`
-* `on_cancel`
-* `on_trash`
-* `after_delete`
-* `doc_events`
-* `override_doctype_class`
-* `override_whitelisted_methods`
-* Scheduler hooks
-* Background jobs
-* Queues
-* Server Scripts
-* Client Scripts
-* List view scripts
-* Reports
-* Workflows
-* Notifications
-* Web forms
-* API endpoints
-* Integrations
-* Related DocTypes
-* Existing patches
-* Custom fields and property setters
-
-Do not place logic in a client script when the rule must also protect API, import, background, or server-side flows.
-
-Do not duplicate server-side business rules only in the frontend.
-
----
-
-## 5. Prefer Standard Frappe Mechanisms
-
-Before creating custom infrastructure, check whether the requirement can be handled safely through:
-
-* Standard DocType fields
-* Settings DocType
-* Workflow
-* Assignment Rule
-* Notification
-* Server Script
-* Client Script
-* Report
-* Print Format
-* Property Setter
-* Custom Field
-* Hook
-* Background job
-* Scheduler event
-* Existing controller extension point
-* Standard Frappe API
-* Existing custom-app pattern
-
-Prefer a Desk-level or built-in solution when it fully satisfies the requirement and remains maintainable.
-
-Do not recommend a new custom app or complex architecture before checking existing standard options.
-
-Also do not force a Desk-only solution when the requirement requires tested, version-controlled application code.
-
-Explain why the selected implementation level is appropriate.
-
----
-
-## 6. Desk, Website, and Bundle Boundaries
-
-Confirm where the code executes:
-
-* Frappe Desk
-* Website page
-* Web form
-* Portal
-* Print rendering
-* Background worker
-* Scheduler
-* Server
-* Browser
-* Mobile or external client
-
-Do not assume Desk-only JavaScript APIs are available in website or portal bundles.
-
-Before recommending APIs such as dialogs, form controls, list views, or Desk utilities, verify that they are included in the target execution context.
-
-Keep client-side convenience logic separate from server-side authoritative validation.
-
----
-
-## 7. Permissions and Security
-
-For every relevant Frappe operation, check:
-
-* DocType permissions
-* User permissions
-* Role permissions
-* Company restrictions
-* Permission query conditions
-* Shared documents
-* Guest access
-* Whitelisted method exposure
-* `allow_guest`
-* `ignore_permissions`
-* `sudo`-like bypass behaviour
-* Field-level sensitive data
-* File access
-* CSRF and request context
-
-Do not use `ignore_permissions=True` without a verified business reason.
-
-Do not expose an internal method through `@frappe.whitelist()` unless the caller, permission checks, input validation, and response exposure have been reviewed.
-
-Do not assume a logged-in user exists in scheduler or worker execution.
-
----
-
-## 8. Document API Versus Direct Database Updates
+- Scheduler, queues, background jobs, integrations, retries, unattended processing:
+  `docs/ai/BACKGROUND_JOBS.md`
 
-Before choosing an update method, consider whether controller hooks, validation, permissions, modified timestamps, versioning, notifications, and related logic must run.
+- Desk JS, form/list scripts, website, portal, web form, browser bundles:
+  `docs/ai/FRONTEND_CONTEXTS.md`
 
-Inspect whether the project uses:
+- Migration, destructive/state-changing operation, security-sensitive change, permission bypass, production/Bench operation:
+  `docs/ai/HIGH_RISK_OPERATIONS.md`
 
-* `doc.insert()`
-* `doc.save()`
-* `doc.submit()`
-* `doc.cancel()`
-* `frappe.db.set_value()`
-* `frappe.db.bulk_update()`
-* `frappe.get_all()`
-* `frappe.get_list()`
-* Frappe Query Builder
-* Direct SQL
+- Large cross-cutting feature/refactor, architecture change, or a task spanning several modules:
+  `docs/ai/COMPLEX_SDLC.md`
 
-Do not replace a document API call with a direct database update without explaining which hooks and validations will be bypassed.
+## Task behavior
 
-Do not use direct SQL merely because it is shorter.
+- Small fix/change: inspect -> edit -> focused verify -> review.
+- Bug: reproduce/trace -> root cause -> minimal fix -> regression verification when practical.
+- Feature: inspect existing pattern -> identify integration point -> implement -> focused tests -> review.
+- Refactor: establish current behavior -> small staged change -> preserve behavior -> verify.
+- Large/architectural task: use `docs/ai/COMPLEX_SDLC.md`.
 
-When direct SQL is necessary:
+Do not create a long plan for a tiny change.
 
-* Parameterize values
-* Confirm table and field names
-* Respect tenant and permission requirements
-* Explain bypassed framework behaviour
-* Consider rollback
-* Preview affected records
-* Avoid broad updates
-
----
+## Context recovery
 
-## 9. Query and Report Safety
-
-For Frappe reports, Insights queries, Query Builder, and SQL:
-
-* Confirm the intended data grain.
-* Confirm join cardinality.
-* Check whether joins multiply rows.
-* Check grouping before aggregation.
-* Check null and empty-string behaviour.
-* Confirm date filters and timezone handling.
-* Check submitted, cancelled, and draft document status.
-* Verify company and permission filters.
-* Check whether a target or measure is repeated once per joined transaction.
-* Avoid N+1 queries.
-* Parameterize report filters.
-* Preserve numeric types until final formatting.
-
-When totals are incorrect, inspect the dataset grain before changing the final formula.
-
-Do not solve duplicate aggregation only by applying `DISTINCT` unless the underlying relationship justifies it.
-
----
-
-## 10. Background Jobs and Automated Processing
-
-For scheduler and background processing, inspect:
-
-* Queue name
-* Timeout
-* Retry behaviour
-* Idempotency
-* Duplicate enqueue protection
-* Concurrent workers
-* Record locking
-* Processing status
-* Partial success
-* Failure recovery
-* Progress reporting
-* Realtime events
-* Transaction boundaries
-* Whether a worker can safely resume
-
-A retry must not create duplicate business records or repeat irreversible side effects.
-
-Prefer explicit statuses such as Pending, Processing, Failed, Validated, or Processed when they match the existing project pattern.
-
-Do not introduce new statuses without checking reports, filters, list indicators, workflows, and integrations that depend on current values.
-
----
-
-## 11. Configuration-Driven Frappe Logic
-
-Before creating constants, check whether the value belongs in:
-
-* An existing Settings DocType
-* `hooks.py`
-* Site configuration
-* Common site configuration
-* A standard Frappe setting
-* A custom field
-* A shared project constant
-* An existing mapping
-* An integration configuration record
-
-Use a Settings DocType when authorised users genuinely need to maintain the value through Desk.
-
-Use code-level constants when the value is technical, version-controlled, and not intended for normal user configuration.
-
-Do not move every fixed business rule into a Settings DocType.
-
-Explain:
-
-* Who should be allowed to change the value
-* How often it may change
-* Whether a code deployment should be required
-* Why the selected configuration location is appropriate
-
----
-
-## 12. Frappe Commands
-
-Do not run Frappe or Bench commands that modify state without explicit permission.
-
-This includes, where applicable:
-
-* `bench build`
-* `bench migrate`
-* `bench update`
-* `bench restart`
-* `bench clear-cache`
-* `bench clear-website-cache`
-* App installation or uninstallation
-* Patch execution
-* Database restore
-* Site creation or deletion
-* Scheduler changes
-* Production process changes
-
-Before suggesting such a command, explain:
-
-* What it changes
-* Whether it affects one site or the full bench
-* Whether downtime is possible
-* Whether backup is required
-* Whether the command belongs on local, staging, or production
-
-Never imply that running a command locally automatically updates another server.
-
----
-
-## 13. Required Frappe Answer Format
-
-For answers involving a DocType, state:
-
-### Classification
-
-Whether the DocType is confirmed or likely to be master, transaction, configuration, generated, staging, child, or log data.
-
-### Creator and Updater
-
-Who or what creates and updates it.
-
-### Execution Mode
-
-Whether processing is manual, automated, or both.
-
-### User Presence
-
-Whether a user is expected to be present during processing.
-
-### Lifecycle
-
-What happens before, during, and after this DocType.
-
-### Evidence
-
-Which controller, hooks, scheduler, API, integration, or project files support the classification.
-
-### Solution Impact
-
-How the lifecycle affects validation, errors, permissions, transactions, retries, and UI behaviour.
-
-Do not label the classification as confirmed unless it has been verified from actual project code, exact framework implementation, official documentation, hooks, integrations, or existing usage.
-
-## Universal Engineering Workflow
-
-For software-development tasks, keep this `AGENTS.md` as the primary source of repository-specific and Frappe-specific truth.
-
-Also follow the shared engineering workflow in `docs/ai/00_CORE_WORKFLOW.md`.
-
-Read additional guidance only when relevant to the task:
-
-- Frappe-specific implementation checks: `docs/ai/10_FRAPPE_ENGINEERING.md`
-- testing, security, database, performance, and final review: `docs/ai/20_QUALITY_GATES.md`
-- bug/feature/refactor/UI/API/database task routing: `docs/ai/30_TASK_ROUTING.md`
-- optional stable project facts: `docs/ai/PROJECT_CONTEXT.md`
-
-Do not load `docs/ai/archive/UNIVERSAL_AI_SOFTWARE_ENGINEER_PROMPT.md` for normal tasks. It is an archive/reference, not routine context.
-
-Default lifecycle:
-
-`UNDERSTAND -> INSPECT -> TRACE -> PLAN -> IMPLEMENT -> TEST -> REVIEW -> REPORT`
-
-Use repository evidence instead of asking the user for information that can be discovered locally. Preserve existing Frappe/project patterns and make the smallest correct change. Do not change unrelated code. Do not claim verification that was not actually performed.
+If conversation history appears incomplete, compacted, interrupted, or inconsistent with the working tree, do not guess from memory. Reconstruct state from the current repository: inspect `git status`, relevant diff, changed files, tests/results available in the session, and the user's current request before continuing.

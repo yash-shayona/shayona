@@ -837,7 +837,20 @@ def employee_portal_end_day():
 
 @frappe.whitelist()
 def employee_portal_start_work():
-    user = frappe.session.user
+    frappe.response["message"] = _start_employee_work_session(
+        user=frappe.session.user,
+        project=frappe.form_dict.get("project"),
+        task=frappe.form_dict.get("task"),
+        activity_type=frappe.form_dict.get("activity_type"),
+        description=frappe.form_dict.get("description"),
+    )
+
+
+def _start_employee_work_session(
+    user, project="", task="", activity_type="", description=""
+):
+    # This shared helper keeps every portal entry point on the same attendance,
+    # permission, and Timesheet lifecycle path.
 
     if user == "Guest":
         frappe.throw("Please login to continue.")
@@ -852,13 +865,13 @@ def employee_portal_start_work():
     if not employee:
         frappe.throw("No active Employee is linked with this User.")
 
-    project = (frappe.form_dict.get("project") or "").strip()
+    project = (project or "").strip()
 
-    task = (frappe.form_dict.get("task") or "").strip()
+    task = (task or "").strip()
 
-    activity_type = (frappe.form_dict.get("activity_type") or "").strip()
+    activity_type = (activity_type or "").strip()
 
-    description = (frappe.form_dict.get("description") or "").strip()
+    description = (description or "").strip()
 
     # At least one work-related value is required.
     if not (project or task or activity_type or description):
@@ -1019,15 +1032,18 @@ def employee_portal_start_work():
 
         timesheet.save()
 
-    frappe.response["message"] = {"success": True, "timesheet": timesheet.name}
+    return {"success": True, "timesheet": timesheet.name}
 
 
 @frappe.whitelist()
 def employee_portal_switch_task():
-    # API Method:
-    # employee_portal_switch_task
+    frappe.response["message"] = _stop_employee_work_session(frappe.session.user)
 
-    user = frappe.session.user
+
+def _stop_employee_work_session(user, expected_task=""):
+    # This is named for the existing switch-task API, but it only closes the
+    # currently running row. expected_task prevents a task-scoped UI from
+    # stopping a different task's session.
 
     if user == "Guest":
         frappe.throw("Please login to continue.")
@@ -1067,6 +1083,11 @@ def employee_portal_switch_task():
     if not open_row:
         frappe.throw("No work session is currently running.")
 
+    if expected_task and open_row.task != expected_task:
+        frappe.throw(
+            "Another task is currently running. Open that task and stop it first."
+        )
+
     now = frappe.utils.now_datetime()
 
     # Close only the current running row.
@@ -1076,10 +1097,12 @@ def employee_portal_switch_task():
 
     timesheet.save()
 
-    frappe.response["message"] = {
+    return {
         "success": True,
         "timesheet": timesheet.name,
         "closed_row": open_row.name,
+        "project": open_row.project or "",
+        "task": open_row.task or "",
         "stopped_at": now,
     }
 

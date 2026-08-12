@@ -62,6 +62,7 @@ doctype_js = {
     # "doctype" : "public/js/doctype.js",
     "Timesheet": "public/js/timesheet/timesheet.js",
     "Task": ["public/js/task/task.js"],
+    # "Sales Order": ["public/js/sales_order/sales_order.js"],
 }
 
 doctype_list_js = {
@@ -227,9 +228,9 @@ scheduler_events = {
     # 	"all": [
     # 		"shayona.tasks.all"
     # 	],
-    # 	"daily": [
-    # 		"shayona.tasks.daily"
-    # 	],
+    "daily": [
+        "shayona.api.portal.project_portal.send_employee_project_portal_due_task_reminders",
+    ],
     # 	"hourly": [
     # 		"shayona.tasks.hourly"
     # 	],

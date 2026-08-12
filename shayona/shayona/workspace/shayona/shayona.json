@@ -94,8 +94,8 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-05 10:31:41.010171",
- "modified_by": "yashsolanki@shayonatechnology.com",
+ "modified": "2026-08-08 19:07:11.413183",
+ "modified_by": "Administrator",
  "module": "Shayona",
  "name": "Shayona",
  "number_cards": [],
@@ -118,7 +118,7 @@
    "doc_view": "List",
    "label": "Employee Project Portal",
    "type": "URL",
-   "url": "/shayona/projects"
+   "url": "/shayona/projects/dashboard"
   }
  ],
  "title": "Shayona",
