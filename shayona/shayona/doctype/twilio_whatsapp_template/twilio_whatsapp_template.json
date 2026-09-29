@@ -1,0 +1,112 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "autoname": "field:template_name",
+  "creation": "2026-08-13 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "enabled",
+    "template_name",
+    "content_sid",
+    "column_break_1",
+    "reference_doctype",
+    "language_code",
+    "parameter_count",
+    "details_section",
+    "template_preview",
+    "notes"
+  ],
+  "fields": [
+    {
+      "default": "1",
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "in_list_view": 1,
+      "label": "Enabled"
+    },
+    {
+      "fieldname": "template_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Template Name",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "description": "Approved Twilio Content SID. This app does not create or approve templates.",
+      "fieldname": "content_sid",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Content SID",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "column_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "description": "Optional. Restrict this local template reference to one Frappe DocType.",
+      "fieldname": "reference_doctype",
+      "fieldtype": "Link",
+      "label": "Reference DocType",
+      "options": "DocType"
+    },
+    {
+      "default": "en",
+      "description": "Informational only in this MVP; the approved Twilio Content SID controls the provider template.",
+      "fieldname": "language_code",
+      "fieldtype": "Data",
+      "label": "Language Code"
+    },
+    {
+      "default": "0",
+      "description": "Number of numbered variables expected by the approved template.",
+      "fieldname": "parameter_count",
+      "fieldtype": "Int",
+      "label": "Parameter Count",
+      "reqd": 1
+    },
+    {
+      "fieldname": "details_section",
+      "fieldtype": "Section Break",
+      "label": "Reference Information"
+    },
+    {
+      "description": "Optional human-readable copy of the approved template for administrators. It is never sent as free-form text.",
+      "fieldname": "template_preview",
+      "fieldtype": "Small Text",
+      "label": "Template Preview"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "links": [],
+  "modified": "2026-08-13 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Shayona",
+  "name": "Twilio WhatsApp Template",
+  "naming_rule": "By fieldname",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

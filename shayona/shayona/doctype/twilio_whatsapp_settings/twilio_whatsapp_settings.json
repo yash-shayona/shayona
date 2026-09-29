@@ -1,0 +1,91 @@
+{
+  "actions": [],
+  "allow_rename": 0,
+  "creation": "2026-08-13 00:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "enabled",
+    "credentials_section",
+    "account_sid",
+    "auth_token",
+    "sender_section",
+    "whatsapp_from_number",
+    "default_country_code",
+    "request_timeout_seconds"
+  ],
+  "fields": [
+    {
+      "default": "0",
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "label": "Enabled"
+    },
+    {
+      "fieldname": "credentials_section",
+      "fieldtype": "Section Break",
+      "label": "Twilio Credentials"
+    },
+    {
+      "fieldname": "account_sid",
+      "fieldtype": "Data",
+      "label": "Account SID",
+      "mandatory_depends_on": "eval:doc.enabled==1"
+    },
+    {
+      "fieldname": "auth_token",
+      "fieldtype": "Password",
+      "label": "Auth Token",
+      "mandatory_depends_on": "eval:doc.enabled==1"
+    },
+    {
+      "fieldname": "sender_section",
+      "fieldtype": "Section Break",
+      "label": "WhatsApp Sender"
+    },
+    {
+      "description": "Use the WhatsApp-enabled Twilio sender number. E.164 format is recommended, e.g. +14155550123.",
+      "fieldname": "whatsapp_from_number",
+      "fieldtype": "Data",
+      "label": "WhatsApp From Number",
+      "mandatory_depends_on": "eval:doc.enabled==1"
+    },
+    {
+      "description": "Optional ISO country code used only when recipient numbers do not start with +, e.g. IN.",
+      "fieldname": "default_country_code",
+      "fieldtype": "Data",
+      "label": "Default Country Code"
+    },
+    {
+      "default": "15",
+      "description": "HTTP timeout for a Twilio send request. Minimum 5 seconds.",
+      "fieldname": "request_timeout_seconds",
+      "fieldtype": "Int",
+      "label": "Request Timeout Seconds"
+    }
+  ],
+  "index_web_pages_for_search": 0,
+  "issingle": 1,
+  "links": [],
+  "modified": "2026-08-13 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Shayona",
+  "name": "Twilio WhatsApp Settings",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "print": 1,
+      "read": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "track_changes": 1
+}

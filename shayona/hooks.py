@@ -63,6 +63,7 @@ doctype_js = {
     "Timesheet": "public/js/timesheet/timesheet.js",
     "Task": ["public/js/task/task.js"],
     # "Sales Order": ["public/js/sales_order/sales_order.js"],
+    "Notification": "public/js/notification.js",
 }
 
 doctype_list_js = {
@@ -112,7 +113,7 @@ website_route_rules = [
     {
         "from_route": "/shayona/projects/<project_name>",
         "to_route": "shayona/projects/detail",
-    }
+    },
 ]
 
 # Generators
@@ -178,7 +179,7 @@ after_uninstall = "shayona.setup.uninstall.after_uninstall"
 
 permission_query_conditions = {
     "Task": "shayona.permissions.task.get_permission_query_conditions",
-     "HD Ticket": "shayona.permissions.hd_ticket.get_permission_query_conditions",
+    "HD Ticket": "shayona.permissions.hd_ticket.get_permission_query_conditions",
 }
 #
 has_permission = {
@@ -245,7 +246,7 @@ scheduler_events = {
         "59 23 * * *": [
             "shayona.shayona.doctype.activity_tracker.activity_tracker.delete_old_activity_trackers"
         ],
-    }
+    },
 }
 
 # Testing
@@ -262,6 +263,9 @@ extend_doctype_class = {
     "Timesheet": "shayona.mixins.timesheet.TimesheetMixin",
     "Attendance": "shayona.mixins.attendance.AttendanceMixin",
     "Salary Slip": "shayona.mixins.salary_slip.SalarySlipMixin",
+    "Notification": [
+        "shayona.mixins.notification.NotificationWhatsAppMixin"
+    ],
 }
 
 # Overriding Methods

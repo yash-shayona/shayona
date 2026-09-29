@@ -1,0 +1,201 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-13 13:20:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "enabled",
+  "detection_section",
+  "default_lookback_months",
+  "maximum_lookback_months",
+  "reactivation_days",
+  "minimum_customer_item_orders",
+  "overstock_months_threshold",
+  "offer_section",
+  "default_discount_percentage",
+  "minimum_discount_percentage",
+  "maximum_discount_percentage",
+  "minimum_margin_percentage",
+  "incremental_quantity_percentage",
+  "default_offer_validity_days",
+  "max_recommendations_per_run",
+  "execution_section",
+  "price_list",
+  "warehouse"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "detection_section",
+   "fieldtype": "Section Break",
+   "label": "Detection"
+  },
+  {
+   "fieldname": "default_lookback_months",
+   "fieldtype": "Int",
+   "label": "Default Lookback Months",
+   "default": "12",
+   "reqd": 1
+  },
+  {
+   "fieldname": "maximum_lookback_months",
+   "fieldtype": "Int",
+   "label": "Maximum Lookback Months",
+   "default": "24",
+   "reqd": 1,
+   "description": "Operational guardrail for API-requested history windows."
+  },
+  {
+   "fieldname": "reactivation_days",
+   "fieldtype": "Int",
+   "label": "Reactivation Days",
+   "default": "45",
+   "reqd": 1
+  },
+  {
+   "fieldname": "minimum_customer_item_orders",
+   "fieldtype": "Int",
+   "label": "Minimum Customer-Item Orders",
+   "default": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "overstock_months_threshold",
+   "fieldtype": "Float",
+   "label": "Overstock Months Threshold",
+   "default": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "offer_section",
+   "fieldtype": "Section Break",
+   "label": "Offer Guardrails"
+  },
+  {
+   "fieldname": "default_discount_percentage",
+   "fieldtype": "Percent",
+   "label": "Default Discount %",
+   "default": "5",
+   "reqd": 1
+  },
+  {
+   "fieldname": "minimum_discount_percentage",
+   "fieldtype": "Percent",
+   "label": "Minimum Useful Discount %",
+   "default": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "maximum_discount_percentage",
+   "fieldtype": "Percent",
+   "label": "Maximum Discount %",
+   "default": "10",
+   "reqd": 1
+  },
+  {
+   "fieldname": "minimum_margin_percentage",
+   "fieldtype": "Percent",
+   "label": "Minimum Margin %",
+   "default": "15",
+   "reqd": 1
+  },
+  {
+   "fieldname": "incremental_quantity_percentage",
+   "fieldtype": "Percent",
+   "label": "Incremental Quantity Target %",
+   "default": "20",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_offer_validity_days",
+   "fieldtype": "Int",
+   "label": "Default Offer Validity Days",
+   "default": "10",
+   "reqd": 1
+  },
+  {
+   "fieldname": "max_recommendations_per_run",
+   "fieldtype": "Int",
+   "label": "Max Recommendations per Run",
+   "default": "20",
+   "reqd": 1
+  },
+  {
+   "fieldname": "execution_section",
+   "fieldtype": "Section Break",
+   "label": "Execution Scope"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Restrict Pricing Rule to Price List",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Restrict Analysis/Pricing Rule to Warehouse",
+   "options": "Warehouse"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-13 13:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Offer Policy",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:company",
+ "naming_rule": "By fieldname",
+ "track_changes": 1,
+ "title_field": "company"
+}

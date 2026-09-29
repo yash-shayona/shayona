@@ -1,0 +1,232 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-13 13:20:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "stock_uom",
+  "history_section",
+  "purchase_count",
+  "last_purchase_date",
+  "days_since_last_purchase",
+  "historical_net_qty",
+  "historical_avg_qty",
+  "historical_avg_rate",
+  "stock_section",
+  "company_avg_monthly_sales_qty",
+  "current_stock",
+  "stock_months",
+  "valuation_rate",
+  "item_max_discount",
+  "simulation_section",
+  "baseline_qty",
+  "baseline_revenue",
+  "baseline_gross_profit",
+  "minimum_qty",
+  "discount_percentage",
+  "offer_rate",
+  "offer_margin_percentage",
+  "expected_qty",
+  "estimated_revenue",
+  "estimated_discount_cost",
+  "estimated_gross_profit",
+  "estimated_incremental_gross_profit",
+  "estimated_stock_reduction"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "history_section",
+   "fieldtype": "Section Break",
+   "label": "Historical Signals"
+  },
+  {
+   "fieldname": "purchase_count",
+   "fieldtype": "Int",
+   "label": "Purchase Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_purchase_date",
+   "fieldtype": "Date",
+   "label": "Last Purchase Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "days_since_last_purchase",
+   "fieldtype": "Int",
+   "label": "Days Since Last Purchase",
+   "read_only": 1
+  },
+  {
+   "fieldname": "historical_net_qty",
+   "fieldtype": "Float",
+   "label": "Historical Net Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "historical_avg_qty",
+   "fieldtype": "Float",
+   "label": "Historical Avg Qty / Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "historical_avg_rate",
+   "fieldtype": "Currency",
+   "label": "Historical Avg Rate (Company Currency)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Stock Signals"
+  },
+  {
+   "fieldname": "company_avg_monthly_sales_qty",
+   "fieldtype": "Float",
+   "label": "Company Avg Monthly Sales Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_stock",
+   "fieldtype": "Float",
+   "label": "Current Stock",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_months",
+   "fieldtype": "Float",
+   "label": "Stock Months",
+   "read_only": 1
+  },
+  {
+   "fieldname": "valuation_rate",
+   "fieldtype": "Currency",
+   "label": "Weighted Valuation Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_max_discount",
+   "fieldtype": "Percent",
+   "label": "Item Max Discount %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "simulation_section",
+   "fieldtype": "Section Break",
+   "label": "Simulation"
+  },
+  {
+   "fieldname": "baseline_qty",
+   "fieldtype": "Float",
+   "label": "Baseline Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "baseline_revenue",
+   "fieldtype": "Currency",
+   "label": "Baseline Revenue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "baseline_gross_profit",
+   "fieldtype": "Currency",
+   "label": "Baseline Gross Profit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "minimum_qty",
+   "fieldtype": "Float",
+   "label": "Offer Minimum Qty",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "discount_percentage",
+   "fieldtype": "Percent",
+   "label": "Discount %",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "offer_rate",
+   "fieldtype": "Currency",
+   "label": "Simulated Offer Rate",
+   "read_only": 1
+  },
+  {
+   "fieldname": "offer_margin_percentage",
+   "fieldtype": "Percent",
+   "label": "Simulated Margin %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_qty",
+   "fieldtype": "Float",
+   "label": "Expected Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimated_revenue",
+   "fieldtype": "Currency",
+   "label": "Estimated Revenue",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimated_discount_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Discount Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimated_gross_profit",
+   "fieldtype": "Currency",
+   "label": "Estimated Gross Profit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimated_incremental_gross_profit",
+   "fieldtype": "Currency",
+   "label": "Estimated Incremental Gross Profit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "estimated_stock_reduction",
+   "fieldtype": "Float",
+   "label": "Estimated Stock Reduction",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-13 13:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Offer Recommendation Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

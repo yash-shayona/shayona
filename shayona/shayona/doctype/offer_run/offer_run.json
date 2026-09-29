@@ -1,0 +1,196 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-13 13:20:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "offer_policy",
+  "goal",
+  "scope_section",
+  "customer",
+  "item_code",
+  "lookback_months",
+  "source",
+  "external_request_id",
+  "idempotency_key",
+  "execution_section",
+  "algorithm_version",
+  "status",
+  "started_at",
+  "completed_at",
+  "recommendation_count",
+  "analysis_snapshot",
+  "error_message"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "offer_policy",
+   "fieldtype": "Link",
+   "label": "Offer Policy",
+   "options": "Offer Policy",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "goal",
+   "fieldtype": "Select",
+   "label": "Goal",
+   "options": "Customer Reactivation\nOverstock Clearance\nReactivation + Overstock",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "scope_section",
+   "fieldtype": "Section Break",
+   "label": "Scope"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "lookback_months",
+   "fieldtype": "Int",
+   "label": "Lookback Months",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "API\nDesk\nn8n\nMCP\nScheduler",
+   "default": "API",
+   "reqd": 1
+  },
+  {
+   "fieldname": "external_request_id",
+   "fieldtype": "Data",
+   "label": "External Request ID",
+   "description": "Optional idempotency key unique within Company + Source."
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "execution_section",
+   "fieldtype": "Section Break",
+   "label": "Execution"
+  },
+  {
+   "fieldname": "algorithm_version",
+   "fieldtype": "Data",
+   "label": "Algorithm Version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Running\nCompleted\nFailed",
+   "read_only": 1,
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recommendation_count",
+   "fieldtype": "Int",
+   "label": "Recommendation Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "analysis_snapshot",
+   "fieldtype": "Code",
+   "label": "Analysis Snapshot",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-13 13:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Shayona",
+ "name": "Offer Run",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "OFRUN-.#####",
+ "naming_rule": "Expression",
+ "track_changes": 1,
+ "title_field": "company",
+ "search_fields": "customer,item_code,external_request_id"
+}
